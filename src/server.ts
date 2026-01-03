@@ -15,11 +15,13 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Methods",
     "GET,HEAD,OPTIONS,POST,PUT,DELETE,PATCH",
   );
-  res.header(
-    "Access-Control-Allow-Headers",
-    req.header("Access-Control-Request-Headers") ??
-      "Content-Type, Authorization, X-Requested-With",
-  );
+  res.header("Access-Control-Allow-Headers", [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+  ].join(", "));
   if (req.method === "OPTIONS") {
     res.sendStatus(204);
     return;
