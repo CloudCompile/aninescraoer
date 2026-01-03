@@ -11,10 +11,14 @@ const PORT = process.env.PORT ?? 3001;
 // allow all origins
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET,HEAD,OPTIONS,POST,PUT,DELETE,PATCH",
+  );
   res.header(
     "Access-Control-Allow-Headers",
-    req.header("Access-Control-Request-Headers") ?? "*",
+    req.header("Access-Control-Request-Headers") ??
+      "Content-Type, Authorization, X-Requested-With",
   );
   if (req.method === "OPTIONS") {
     res.sendStatus(204);
