@@ -845,7 +845,7 @@ export async function getSources(xrax: string) {
     try {
       resp_json = JSON.parse(respText);
     } catch (parseErr) {
-      console.error("Failed to parse response as JSON. Response starts with:", respText.substring(0, 100));
+      console.error("Failed to parse response as JSON. Response length:", respText.length, "Status:", resp.status);
       throw new Error("Failed to parse sources response: server returned non-JSON response");
     }
 
