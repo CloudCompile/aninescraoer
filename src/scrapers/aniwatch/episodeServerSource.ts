@@ -24,6 +24,7 @@ export const scrapeAnimeEpisodeSources = async (
       case Servers.MegaCloud:
       case Servers.VidStreaming:
       case Servers.VidCloud:
+      case Servers.VidSrc:
         return {
           ...(await new MegaCloud().extract2(serverUrl)),
         };
@@ -110,6 +111,7 @@ export const scrapeAnimeEpisodeSources = async (
           if (!serverId) throw new Error("RapidCloud not found");
           break;
         case Servers.VidStreaming:
+        case Servers.VidSrc:
         case Servers.HD1:
           serverId = extract_server_id($, 4, category);
           console.log("SERVER_ID: ", serverId);

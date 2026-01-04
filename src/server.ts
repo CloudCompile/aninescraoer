@@ -8,6 +8,9 @@ config(); // dotenv
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
+// Enable trust proxy for rate limiting behind reverse proxies (Vercel, etc.)
+app.set("trust proxy", 1);
+
 // allow all origins
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");

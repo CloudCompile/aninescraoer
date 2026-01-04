@@ -829,18 +829,25 @@ export async function getSources(xrax: string) {
       "&b=" +
       browser_version;
 
-    let resp_json = await (
-      await fetch(getSourcesUrl, {
-        headers: {
-          "User-Agent": user_agent,
-          //"Referrer": fake_window.origin + "/v2/embed-4/" + xrax + "?z=",
-          Referer: embed_url + xrax + "?k=1",
-          "X-Reuested-With": "XMLHttpRequest",
-        },
-        method: "GET",
-        mode: "cors",
-      })
-    ).json();
+    const resp = await fetch(getSourcesUrl, {
+      headers: {
+        "User-Agent": user_agent,
+        //"Referrer": fake_window.origin + "/v2/embed-4/" + xrax + "?z=",
+        Referer: embed_url + xrax + "?k=1",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      method: "GET",
+      mode: "cors",
+    });
+
+    const respText = await resp.text();
+    let resp_json;
+    try {
+      resp_json = JSON.parse(respText);
+    } catch (parseErr) {
+      console.error("Failed to parse response as JSON. Response starts with:", respText.substring(0, 100));
+      throw new Error("Failed to parse sources response: server returned non-JSON response");
+    }
 
     //let encrypted = resp_json.sources;
     let Q3 = fake_window.localStorage.kversion;

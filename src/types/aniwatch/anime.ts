@@ -176,7 +176,8 @@ type AnimeServers =
   | "megacloud"
   | "streamsb"
   | "streamtape"
-  | "vidcloud";
+  | "vidcloud"
+  | "vidsrc";
 
 enum Servers {
   VidStreaming = "vidstreaming",
@@ -184,6 +185,7 @@ enum Servers {
   StreamSB = "streamsb",
   StreamTape = "streamtape",
   VidCloud = "vidcloud",
+  VidSrc = "vidsrc",
   HD1 = "hd-1",
   HD2 = "hd-2",
   AsianLoad = "asianload",
