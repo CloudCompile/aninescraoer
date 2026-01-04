@@ -68,7 +68,14 @@ export const scrapeAnimeEpisodeSources = async (
     );
 
     const { data } = resp;
-    const html = typeof data === "string" ? data : data && data.html;
+
+    if (data == null) {
+      throw createHttpError.InternalServerError(
+        "Failed to load episode server data",
+      );
+    }
+
+    const html = typeof data === "string" ? data : data.html;
 
     if (typeof html !== "string") {
       throw createHttpError.InternalServerError(
