@@ -33,7 +33,22 @@ export const scrapeEpisodeServersPage = async (
       },
     );
 
-    const $: CheerioAPI = load(data.html);
+    if (data == null) {
+      throw createHttpError.InternalServerError("Failed to load server list");
+    }
+
+    const html =
+      typeof data === "string"
+        ? data
+        : typeof data.html === "string"
+          ? data.html
+          : null;
+
+    if (typeof html !== "string") {
+      throw createHttpError.InternalServerError("Failed to load server list");
+    }
+
+    const $: CheerioAPI = load(html);
 
     const epNoSelector: SelectorType = ".server-notice strong";
     res.episodeNo = Number($(epNoSelector).text().split(" ").pop()) || 0;

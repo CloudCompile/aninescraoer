@@ -67,7 +67,28 @@ export const scrapeAnimeEpisodeSources = async (
       },
     );
 
-    const $: CheerioAPI = load(resp.data.html);
+    const { data } = resp;
+
+    if (data == null) {
+      throw createHttpError.InternalServerError(
+        "Failed to load episode server data",
+      );
+    }
+
+    const html =
+      typeof data === "string"
+        ? data
+        : typeof data.html === "string"
+          ? data.html
+          : null;
+
+    if (typeof html !== "string") {
+      throw createHttpError.InternalServerError(
+        "Failed to load episode server data",
+      );
+    }
+
+    const $: CheerioAPI = load(html);
 
     /**
      * vidStreaming -> 4
