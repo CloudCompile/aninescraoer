@@ -37,7 +37,12 @@ export const scrapeEpisodeServersPage = async (
       throw createHttpError.InternalServerError("Failed to load server list");
     }
 
-    const html = typeof data === "string" ? data : data.html;
+    const html =
+      typeof data === "string"
+        ? data
+        : typeof data.html === "string"
+          ? data.html
+          : null;
 
     if (typeof html !== "string") {
       throw createHttpError.InternalServerError("Failed to load server list");
