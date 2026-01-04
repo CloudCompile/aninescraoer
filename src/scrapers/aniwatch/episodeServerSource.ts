@@ -67,8 +67,8 @@ export const scrapeAnimeEpisodeSources = async (
       },
     );
 
-    const html =
-      typeof resp.data === "string" ? resp.data : resp.data?.html;
+    const { data } = resp;
+    const html = typeof data === "string" ? data : data && data.html;
 
     if (typeof html !== "string") {
       throw createHttpError.InternalServerError(
