@@ -71,7 +71,9 @@ export const scrapeAnimeEpisodeSources = async (
       typeof resp.data === "string" ? resp.data : resp.data?.html;
 
     if (typeof html !== "string") {
-      throw createHttpError.InternalServerError("Failed to load server list");
+      throw createHttpError.InternalServerError(
+        "Failed to load episode server data",
+      );
     }
 
     const $: CheerioAPI = load(html);
