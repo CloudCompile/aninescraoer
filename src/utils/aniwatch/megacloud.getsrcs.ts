@@ -808,15 +808,19 @@ function z(a: any) {
   ];
 }
 
+const updateAjaxPath = () => {
+  const segments = new URL(embed_url).pathname.split("/");
+  ajaxPath = segments.includes("v3")
+    ? "/embed-2/v3/ajax/e-1/getSources"
+    : "/embed-2/ajax/e-1/getSources";
+};
+
 const configureEmbedBase = (embedIframeURL: URL | null, xrax: string) => {
   if (embedIframeURL) {
     const baseHref = embedIframeURL.href.split("?")[0];
     embed_origin = embedIframeURL.origin;
     embed_url = baseHref.slice(0, baseHref.lastIndexOf("/") + 1);
-    const segments = new URL(embed_url).pathname.split("/");
-    ajaxPath = segments.includes("v3")
-      ? "/embed-2/v3/ajax/e-1/getSources"
-      : "/embed-2/ajax/e-1/getSources";
+    updateAjaxPath();
     const search = embedIframeURL.search || "?k=1";
     const embedReferer = `${embed_url}${xrax}${search}`;
 
@@ -827,10 +831,7 @@ const configureEmbedBase = (embedIframeURL: URL | null, xrax: string) => {
     fake_window.location.href = embedReferer;
     nodeList.image.src = `${embed_origin}/images/image.png?v=0.1.0`;
   } else {
-    const segments = new URL(embed_url).pathname.split("/");
-    ajaxPath = segments.includes("v3")
-      ? "/embed-2/v3/ajax/e-1/getSources"
-      : "/embed-2/ajax/e-1/getSources";
+    updateAjaxPath();
     referrer = `${embed_url}${xrax}?k=1`;
   }
 };
