@@ -225,7 +225,7 @@ class MegaCloud extends VideoExtractor {
 
       const xrax = embedIframeURL.pathname.split("/").pop() || "";
 
-      const resp = await getSources(xrax);
+      const resp = await getSources(xrax, embedIframeURL);
       if (!resp) return extractedData;
 
       if (Array.isArray(resp.sources)) {
