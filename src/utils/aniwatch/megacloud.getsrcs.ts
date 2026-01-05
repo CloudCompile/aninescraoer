@@ -842,7 +842,10 @@ export async function getSources(xrax: string, embedIframeURL?: URL) {
   try {
     await V();
 
-    const ajaxPath = embed_url.includes("/v3/")
+    const hasV3Segment = new URL(embed_url)
+      .pathname.split("/")
+      .includes("v3");
+    const ajaxPath = hasV3Segment
       ? "/embed-2/v3/ajax/e-1/getSources"
       : "/embed-2/ajax/e-1/getSources";
     let getSourcesUrl =
