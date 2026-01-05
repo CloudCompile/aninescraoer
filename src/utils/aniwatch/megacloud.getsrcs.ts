@@ -829,7 +829,7 @@ const configureEmbedBase = (embedIframeURL: URL | null, xrax: string) => {
 export async function getSources(xrax: string, embedIframeURL?: URL) {
   configureEmbedBase(embedIframeURL ?? null, xrax);
   const embedPageUrl = `${embed_url}${xrax}${embedIframeURL?.search || "?k=1"}`;
-  const embedReferer = embedIframeURL ? embedPageUrl : referrer;
+  const embedReferer = embedPageUrl;
 
   await getMeta(embedPageUrl);
   fake_window.xrax = xrax;
