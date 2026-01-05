@@ -12,10 +12,10 @@ import MegaCloud from "../../utils/aniwatch/megacloud";
 import { type ScrapedAnimeEpisodesSources } from "../../types/aniwatch/anime";
 
 export const ensureVidSrcEmbedHost = (url: URL): URL => {
-  if (url.hostname === "vidsrc-embed.ru") return url;
+  if (url.hostname === "vidsrc-embed.su") return url;
 
   const normalized = new URL(url.href);
-  normalized.hostname = "vidsrc-embed.ru";
+  normalized.hostname = "vidsrc-embed.su";
   normalized.protocol = "https:";
   normalized.port = "";
 
