@@ -11,6 +11,17 @@ import StreamTape from "../../utils/aniwatch/streamtape";
 import MegaCloud from "../../utils/aniwatch/megacloud";
 import { type ScrapedAnimeEpisodesSources } from "../../types/aniwatch/anime";
 
+export const ensureVidSrcEmbedHost = (url: URL): URL => {
+  if (url.hostname === "vidsrc-embed.su") return url;
+
+  const normalized = new URL(url.href);
+  normalized.hostname = "vidsrc-embed.su";
+  normalized.protocol = "https:";
+  normalized.port = "";
+
+  return normalized;
+};
+
 export const scrapeAnimeEpisodeSources = async (
   episodeId: string,
   server: AnimeServers = Servers.VidStreaming,
@@ -19,7 +30,12 @@ export const scrapeAnimeEpisodeSources = async (
   const URLs = await URL_fn();
 
   if (episodeId.startsWith("http")) {
-    const serverUrl = new URL(episodeId);
+    let serverUrl = new URL(episodeId);
+
+    if (server === Servers.VidSrc) {
+      serverUrl = ensureVidSrcEmbedHost(serverUrl);
+    }
+
     switch (server) {
       case Servers.MegaCloud:
       case Servers.VidStreaming:
