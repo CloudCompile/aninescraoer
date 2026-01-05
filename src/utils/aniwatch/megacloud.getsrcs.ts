@@ -8,8 +8,10 @@ import { DEFAULT_HIANIME_URL } from "./constants";
 import { headers } from "../../config/headers";
 import type { apiFormat, unencrypSources } from "./megacloud";
 
-const embed_url = "https://megacloud.tv/embed-2/e-1/";
-const referrer = DEFAULT_HIANIME_URL;
+let embed_origin = "https://megacloud.tv";
+let embed_url = `${embed_origin}/embed-2/e-1/`;
+let ajaxPath = "/embed-2/ajax/e-1/getSources";
+let referrer = DEFAULT_HIANIME_URL;
 const user_agent = headers.USER_AGENT_HEADER;
 
 const crypto = webcrypto as unknown as Crypto;
@@ -50,7 +52,7 @@ interface fakeWindow {
 }
 
 const canvas = {
-  baseUrl: "https://megacloud.tv/embed-2/e-1/1hnXq7VzX0Ex?k=1",
+  baseUrl: `${embed_url}1hnXq7VzX0Ex?k=1`,
   width: 0,
   height: 0,
   style: {
@@ -77,10 +79,10 @@ const fake_window: fakeWindow = {
     cookie: "",
   },
 
-  origin: "https://megacloud.tv",
+  origin: embed_origin,
   location: {
-    href: "https://megacloud.tv/embed-2/e-1/1hnXq7VzX0Ex?k=1",
-    origin: "https://megacloud.tv",
+    href: `${embed_url}1hnXq7VzX0Ex?k=1`,
+    origin: embed_origin,
   },
   performance: {
     timeOrigin: dateNow,
@@ -103,7 +105,7 @@ const fake_window: fakeWindow = {
 
 const nodeList = {
   image: {
-    src: "https://megacloud.tv/images/image.png?v=0.1.0",
+    src: `${embed_origin}/images/image.png?v=0.1.0`,
     height: 50,
     width: 65,
     complete: true,
@@ -750,7 +752,7 @@ function r(z: number) {
 const V = async () => {
   try {
     let Q0 = await wasmLoader(
-      "https://megacloud.tv/images/loading.png?v=0.0.9",
+      `${embed_origin}/images/loading.png?v=0.0.9`,
     );
 
     fake_window.bytes = Q0;
@@ -765,8 +767,8 @@ const V = async () => {
 const getMeta = async (url: string) => {
   let resp = await fetch(url, {
     headers: {
-      UserAgent: user_agent,
-      Referrer: referrer,
+      "User-Agent": user_agent,
+      Referer: referrer,
     },
   });
   let txt = await resp.text();
@@ -806,12 +808,43 @@ function z(a: any) {
   ];
 }
 
-export async function getSources(xrax: string) {
-  await getMeta(embed_url + xrax + "?k=1");
+const updateAjaxPath = () => {
+  const segments = new URL(embed_url).pathname.split("/");
+  ajaxPath = segments.includes("v3")
+    ? "/embed-2/v3/ajax/e-1/getSources"
+    : "/embed-2/ajax/e-1/getSources";
+};
+
+const configureEmbedBase = (embedIframeURL: URL | null, xrax: string) => {
+  if (embedIframeURL) {
+    const baseHref = embedIframeURL.href.split("?")[0];
+    embed_origin = embedIframeURL.origin;
+    embed_url = baseHref.slice(0, baseHref.lastIndexOf("/") + 1);
+    updateAjaxPath();
+    const search = embedIframeURL.search || "?k=1";
+    const embedReferer = `${embed_url}${xrax}${search}`;
+
+    referrer = embedReferer;
+    canvas.baseUrl = embedReferer;
+    fake_window.origin = embed_origin;
+    fake_window.location.origin = embed_origin;
+    fake_window.location.href = embedReferer;
+    nodeList.image.src = `${embed_origin}/images/image.png?v=0.1.0`;
+  } else {
+    updateAjaxPath();
+    referrer = `${embed_url}${xrax}?k=1`;
+  }
+};
+
+export async function getSources(xrax: string, embedIframeURL?: URL) {
+  configureEmbedBase(embedIframeURL ?? null, xrax);
+  const embedPageUrl = `${embed_url}${xrax}${embedIframeURL?.search || "?k=1"}`;
+
+  await getMeta(embedPageUrl);
   fake_window.xrax = xrax;
   fake_window.G = xrax;
-  canvas.baseUrl = embed_url + xrax + "?k=1";
-  fake_window.location.href = embed_url + xrax + "?k=1";
+  canvas.baseUrl = embedPageUrl;
+  fake_window.location.href = embedPageUrl;
 
   let browser_version = 1878522368;
   let res = {} as apiFormat;
@@ -820,7 +853,9 @@ export async function getSources(xrax: string) {
     await V();
 
     let getSourcesUrl =
-      "https://megacloud.tv/embed-2/ajax/e-1/getSources?id=" +
+      embed_origin +
+      ajaxPath +
+      "?id=" +
       fake_window.pid +
       "&v=" +
       fake_window.localStorage.kversion +
@@ -832,8 +867,7 @@ export async function getSources(xrax: string) {
     const resp = await fetch(getSourcesUrl, {
       headers: {
         "User-Agent": user_agent,
-        //"Referrer": fake_window.origin + "/v2/embed-4/" + xrax + "?z=",
-        Referer: embed_url + xrax + "?k=1",
+        Referer: embedPageUrl,
         "X-Requested-With": "XMLHttpRequest",
       },
       method: "GET",
