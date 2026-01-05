@@ -829,7 +829,6 @@ const configureEmbedBase = (embedIframeURL: URL | null, xrax: string) => {
 export async function getSources(xrax: string, embedIframeURL?: URL) {
   configureEmbedBase(embedIframeURL ?? null, xrax);
   const embedPageUrl = `${embed_url}${xrax}${embedIframeURL?.search || "?k=1"}`;
-  const embedReferer = embedPageUrl;
 
   await getMeta(embedPageUrl);
   fake_window.xrax = xrax;
@@ -862,7 +861,7 @@ export async function getSources(xrax: string, embedIframeURL?: URL) {
       headers: {
         "User-Agent": user_agent,
         //"Referrer": fake_window.origin + "/v2/embed-4/" + xrax + "?z=",
-        Referer: embedReferer,
+        Referer: embedPageUrl,
         "X-Requested-With": "XMLHttpRequest",
       },
       method: "GET",
