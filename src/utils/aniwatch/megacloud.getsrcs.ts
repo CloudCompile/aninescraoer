@@ -10,6 +10,7 @@ import type { apiFormat, unencrypSources } from "./megacloud";
 
 let embed_origin = "https://megacloud.tv";
 let embed_url = `${embed_origin}/embed-2/e-1/`;
+let ajaxPath = "/embed-2/ajax/e-1/getSources";
 let referrer = DEFAULT_HIANIME_URL;
 const user_agent = headers.USER_AGENT_HEADER;
 
@@ -812,6 +813,10 @@ const configureEmbedBase = (embedIframeURL: URL | null, xrax: string) => {
     const baseHref = embedIframeURL.href.split("?")[0];
     embed_origin = embedIframeURL.origin;
     embed_url = baseHref.slice(0, baseHref.lastIndexOf("/") + 1);
+    const segments = new URL(embed_url).pathname.split("/");
+    ajaxPath = segments.includes("v3")
+      ? "/embed-2/v3/ajax/e-1/getSources"
+      : "/embed-2/ajax/e-1/getSources";
     const search = embedIframeURL.search || "?k=1";
     const embedReferer = `${embed_url}${xrax}${search}`;
 
@@ -822,6 +827,10 @@ const configureEmbedBase = (embedIframeURL: URL | null, xrax: string) => {
     fake_window.location.href = embedReferer;
     nodeList.image.src = `${embed_origin}/images/image.png?v=0.1.0`;
   } else {
+    const segments = new URL(embed_url).pathname.split("/");
+    ajaxPath = segments.includes("v3")
+      ? "/embed-2/v3/ajax/e-1/getSources"
+      : "/embed-2/ajax/e-1/getSources";
     referrer = `${embed_url}${xrax}?k=1`;
   }
 };
@@ -842,12 +851,6 @@ export async function getSources(xrax: string, embedIframeURL?: URL) {
   try {
     await V();
 
-    const hasV3Segment = new URL(embed_url)
-      .pathname.split("/")
-      .includes("v3");
-    const ajaxPath = hasV3Segment
-      ? "/embed-2/v3/ajax/e-1/getSources"
-      : "/embed-2/ajax/e-1/getSources";
     let getSourcesUrl =
       embed_origin +
       ajaxPath +
