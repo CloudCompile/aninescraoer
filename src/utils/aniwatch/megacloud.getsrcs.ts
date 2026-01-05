@@ -867,7 +867,6 @@ export async function getSources(xrax: string, embedIframeURL?: URL) {
     const resp = await fetch(getSourcesUrl, {
       headers: {
         "User-Agent": user_agent,
-        //"Referrer": fake_window.origin + "/v2/embed-4/" + xrax + "?z=",
         Referer: embedPageUrl,
         "X-Requested-With": "XMLHttpRequest",
       },
