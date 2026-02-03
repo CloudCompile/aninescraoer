@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Streaming - Watch Free Anime</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="#" class="logo" onclick="showHome(); return false;">
+                <span class="logo-icon">🎬</span>
+                <span class="logo-text">AnimeStream</span>
+            </a>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search anime..." onkeyup="handleSearchKeyup(event)">
+                <button onclick="searchAnime()" id="searchBtn">🔍</button>
+            </div>
+            <nav>
+                <a href="#" onclick="showHome(); return false;">Home</a>
+                <a href="#" onclick="showCategory('top-airing'); return false;">Top Airing</a>
+                <a href="#" onclick="showCategory('most-popular'); return false;">Popular</a>
+                <a href="#" onclick="showCategory('movie'); return false;">Movies</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="mainContent">
+        <!-- Content will be dynamically loaded here -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading...</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>Built with ❤️ using <a href="https://api-anime-rouge.vercel.app" target="_blank">Anime API</a></p>
+        <p>This is a fan-made project for educational purposes only.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

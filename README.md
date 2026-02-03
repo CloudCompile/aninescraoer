@@ -1,12 +1,35 @@
 # ⚡Anime-API⚡
 <p align="center">
-  <img src="https://skillicons.dev/icons?i=ts,express,nodejs,docker" />
+  <img src="https://skillicons.dev/icons?i=ts,express,nodejs,docker,html,css,js" />
   <br/>
   <a href="https://api-anime-rouge.vercel.app"><kbd>api-anime-rouge.vercel.app</kbd></a>
 </p>
 <br/><br/>
 
 Check it out at <a href="https://api-anime-rouge.vercel.app"><kbd>api-anime-rouge.vercel.app</kbd></a>.
+
+## 🎬 Frontend - Watch Anime
+
+A frontend web application is available on GitHub Pages that allows you to watch anime using this API.
+
+**🌐 Live Demo:** [Watch Anime on GitHub Pages](https://cloudcompile.github.io/aninescraoer/)
+
+### Features
+- 🏠 **Home Page** - Spotlight, trending, and latest anime
+- 🔍 **Search** - Find anime by name
+- 📺 **Watch Episodes** - Stream anime episodes with multiple server options
+- 📱 **Responsive Design** - Works on desktop, tablet, and mobile
+- 🌙 **Dark Theme** - Easy on the eyes
+
+### Frontend Setup
+
+The frontend is located in the `/docs` folder and is automatically deployed to GitHub Pages via GitHub Actions.
+
+To enable GitHub Pages:
+1. Go to your repository settings
+2. Navigate to "Pages" 
+3. Under "Build and deployment", select "GitHub Actions"
+4. The workflow will automatically deploy on push to `main` branch
 
 <break>
 
