@@ -421,9 +421,9 @@ function renderAnimeDetail(animeData, episodesData) {
             <div class="episodes-header">
                 <h2 class="episodes-title">Episodes (${episodesData.totalEpisodes || 0})</h2>
                 <div class="episodes-filters">
-                    <button class="episodes-filter active" onclick="filterEpisodes('all')">All</button>
-                    <button class="episodes-filter" onclick="filterEpisodes('sub')">Sub</button>
-                    <button class="episodes-filter" onclick="filterEpisodes('dub')">Dub</button>
+                    <button class="episodes-filter active" onclick="filterEpisodes('all', this)">All</button>
+                    <button class="episodes-filter" onclick="filterEpisodes('sub', this)">Sub</button>
+                    <button class="episodes-filter" onclick="filterEpisodes('dub', this)">Dub</button>
                 </div>
             </div>
             <div class="episodes-grid" id="episodesGrid">
@@ -473,12 +473,14 @@ function renderEpisodeButtons(episodes) {
     `).join('');
 }
 
-function filterEpisodes(type) {
+function filterEpisodes(type, element) {
     // Update filter button states
     document.querySelectorAll('.episodes-filter').forEach(btn => {
         btn.classList.remove('active');
     });
-    event.target.classList.add('active');
+    if (element) {
+        element.classList.add('active');
+    }
     
     // For now, just show all episodes (filtering would require additional API data)
     const grid = document.getElementById('episodesGrid');
@@ -677,17 +679,44 @@ function renderVideoPlayer(videoUrl, subtitles) {
 
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-        alert('Stream URL copied to clipboard!');
+        showToast('Stream URL copied to clipboard!');
     }).catch(() => {
-        // Fallback for older browsers
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        alert('Stream URL copied to clipboard!');
+        // Fallback: show the URL in a prompt for manual copying
+        showToast('Please copy the URL manually from the page.');
     });
+}
+
+function showToast(message) {
+    // Remove existing toast if any
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // Create and show toast
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--accent-color, #e94560);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 10000;
+        animation: fadeInUp 0.3s ease;
+    `;
+    document.body.appendChild(toast);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 // Pagination
