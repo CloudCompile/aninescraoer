@@ -1,5 +1,5 @@
 // API Base URL - using the deployed Vercel API
-const API_BASE = 'https://api-anime-rouge.vercel.app';
+const API_BASE = 'https://aninescraper.vercel.app/';
 
 // State management
 let currentAnimeId = null;
