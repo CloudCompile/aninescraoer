@@ -45,6 +45,7 @@ To enable GitHub Pages:
 | `/aniwatch/episodes/:id`                                | 1 day (3600 * 24)     |
 | `/aniwatch/servers?id=${id}`                             | 1 day (3600 * 24)    |
 | `/aniwatch/episode-srcs?id=${episodeId}&server=${server}&category=${category}` | 30 minutes (1800)     |
+| `/aniwatch/episode-srcs-fallback?id=${episodeId}&category=${category}` | 30 minutes (1800)     |
 | `/aniwatch/:category?page=${page}`                      | 1 day (3600 * 24)     |
 | `/gogoanime/home`                                       | 1 day (3600 * 24)     |
 | `/gogoanime/search?keyword=${query}&page=${page}`        | 1 hour (3600)         |
@@ -718,6 +719,69 @@ console.log(data);
   ],
   anilistID: number | null,
   malID: number | null,
+}
+```
+
+<break>
+
+### `GET` Anime Episode Streaming Source Links with Multi-Server Fallback
+
+This endpoint automatically tries multiple servers in priority order until it finds one that works. This is recommended over the single-server endpoint for better reliability.
+
+#### Endpoint
+
+```sh
+https://api-anime-rouge.vercel.app/aniwatch/episode-srcs-fallback?id={episodeId}&category={category}
+```
+
+#### Query Parameters
+
+| Parameter  |  Type  |                  Description                  | Required? |     Default      |
+| :--------: | :----: | :-------------------------------------------: | :-------: | :--------------: |
+|    `id`    | string |                  episode Id                   |    Yes    |        --        |
+| `category` | string | The category of the episode ('sub' or 'dub'). |    No     |     `"sub"`      |
+
+#### Request sample
+
+```javascript
+const res = await fetch(
+  "https://api-anime-rouge.vercel.app/aniwatch/episode-srcs-fallback?id=" + encodeURIComponent("solo-leveling-18718?ep=120094") + "&category=sub"
+);
+const data = await res.json();
+console.log(data);
+```
+
+> [!TIP]
+> This endpoint tries servers in this priority order: HD1 → HD2 → VidStreaming → MegaCloud → StreamSB → StreamTape. It returns the first working server's sources.
+
+#### Response Schema
+
+```typescript
+{
+  headers: {
+    Referer: string,
+    "User-Agent": string,
+    ...
+  },
+  sources: [
+    {
+      url: string,
+      isM3U8: boolean,
+      quality?: string,
+    },
+    {...}
+  ],
+  subtitles: [
+    {
+      lang: "English",
+      url: string,
+    },
+    {...}
+  ],
+  anilistID: number | null,
+  malID: number | null,
+  serverUsed: string, // The server that successfully provided the sources
+  triedServers: string[], // List of servers that were tried but failed
 }
 ```
 
