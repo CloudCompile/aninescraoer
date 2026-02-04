@@ -810,7 +810,9 @@ function z(a: any) {
 
 const updateAjaxPath = () => {
   const segments = new URL(embed_url).pathname.split("/");
-  ajaxPath = segments.includes("v3")
+  const embedIndex = segments.indexOf("embed-2");
+  const hasV3 = embedIndex !== -1 && segments[embedIndex + 1] === "v3";
+  ajaxPath = hasV3
     ? "/embed-2/v3/ajax/e-1/getSources"
     : "/embed-2/ajax/e-1/getSources";
 };

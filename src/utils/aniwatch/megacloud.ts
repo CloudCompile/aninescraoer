@@ -50,8 +50,19 @@ class MegaCloud extends VideoExtractor {
       };
 
       const videoId = videoUrl?.href?.split("/")?.pop()?.split("?")[0];
+      
+      // Dynamically construct the getSources URL based on the video URL
+      // Check for /v3/ in the path (e.g., /embed-2/v3/e-1/ vs /embed-2/e-1/)
+      const videoPathSegments = videoUrl.pathname.split("/");
+      const embedIndex = videoPathSegments.indexOf("embed-2");
+      const hasV3 = embedIndex !== -1 && videoPathSegments[embedIndex + 1] === "v3";
+      const sourcesPath = hasV3
+        ? "/embed-2/v3/ajax/e-1/getSources"
+        : "/embed-2/ajax/e-1/getSources";
+      const sourcesUrl = `${videoUrl.origin}${sourcesPath}?id=${videoId || ""}`;
+      
       const { data: srcsData } = await this.client.get<apiFormat>(
-        megacloud.sources.concat(videoId || ""),
+        sourcesUrl,
         {
           headers: {
             Accept: "*/*",
