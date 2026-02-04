@@ -1,5 +1,6 @@
 import { scrapeHomePage } from "../../scrapers/gogoanime/scrappers";
 import type { RequestHandler } from "express";
+import { getErrorStatus, getErrorMessage } from "../../utils/error";
 
 const getHomePageInfo: RequestHandler = async (_req, res) => {
   try {
@@ -10,7 +11,7 @@ const getHomePageInfo: RequestHandler = async (_req, res) => {
     console.log(err); // for TESTING//
     ////////////////////////////////////
     if (!res.headersSent) {
-      res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch home page data" });
+      res.status(getErrorStatus(err)).json({ error: getErrorMessage(err, "Failed to fetch home page data") });
     }
   }
 };

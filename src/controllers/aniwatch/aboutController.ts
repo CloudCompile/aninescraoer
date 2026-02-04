@@ -1,5 +1,6 @@
 import { scrapeAboutPage } from "../../scrapers/aniwatch/about";
 import type { RequestHandler } from "express";
+import { getErrorStatus, getErrorMessage } from "../../utils/error";
 
 const getAboutPageInfo: RequestHandler = async (req, res) => {
   try {
@@ -10,7 +11,7 @@ const getAboutPageInfo: RequestHandler = async (req, res) => {
     console.log(err); // for TESTING//
     ////////////////////////////////////
     if (!res.headersSent) {
-      res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch anime details" });
+      res.status(getErrorStatus(err)).json({ error: getErrorMessage(err, "Failed to fetch anime details") });
     }
   }
 };

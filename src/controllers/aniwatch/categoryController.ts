@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import { scrapeCategoryPage } from "../../scrapers/aniwatch/scrapers";
+import { getErrorStatus, getErrorMessage } from "../../utils/error";
 
 const getCategoryPage: RequestHandler = async (req, res) => {
   try {
@@ -14,7 +15,7 @@ const getCategoryPage: RequestHandler = async (req, res) => {
     console.log(err); // for TESTING//
     ////////////////////////////////////
     if (!res.headersSent) {
-      res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch category data" });
+      res.status(getErrorStatus(err)).json({ error: getErrorMessage(err, "Failed to fetch category data") });
     }
   }
 };
