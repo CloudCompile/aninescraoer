@@ -75,16 +75,20 @@ const getAnimeEpisodeSourcesWithFallback: RequestHandler = async (req, res) => {
 
     // Get available servers for the requested category
     const availableServers = category === "dub" ? serversData.dub : serversData.sub;
-    const availableServerNames = availableServers.map((s: any) => s.serverName.toLowerCase());
+    const availableServerNames = new Set(
+      availableServers.map((s: { serverName: string }) => s.serverName.toLowerCase())
+    );
 
     // Try servers in priority order, but only if they're available
     const serversToTry = SERVER_PRIORITY.filter(server => 
-      availableServerNames.includes(server.toLowerCase())
+      availableServerNames.has(server.toLowerCase())
     );
 
-    // If no priority servers are available, try all available servers
+    // If no priority servers are available, try all available servers from the response
     if (serversToTry.length === 0) {
-      serversToTry.push(...availableServerNames as AnimeServers[]);
+      availableServers.forEach((s: { serverName: string }) => {
+        serversToTry.push(s.serverName as AnimeServers);
+      });
     }
 
     // Try each server until one succeeds
@@ -113,7 +117,7 @@ const getAnimeEpisodeSourcesWithFallback: RequestHandler = async (req, res) => {
         
         errors.push({ server, error: "No sources returned" });
       } catch (err: any) {
-        console.log(`Failed to get sources from server ${server}:`, err.message);
+        console.log(`Failed to get sources from server ${server}:`, err);
         errors.push({ 
           server, 
           error: err.message || "Unknown error" 

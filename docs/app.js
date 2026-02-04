@@ -1,6 +1,9 @@
 // API Base URL - using the deployed Vercel API
 const API_BASE = 'https://aninescraper.vercel.app';
 
+// Constants
+const AUTO_SERVER = 'auto';
+
 // State management
 let currentAnimeId = null;
 let currentEpisodeId = null;
@@ -526,7 +529,7 @@ async function playEpisode(episodeId, episodeNo) {
         // Auto-select using fallback endpoint (tries all servers)
         const category = (serversData.sub && serversData.sub.length > 0) ? 'sub' : 'dub';
         if (serversData.sub.length > 0 || serversData.dub.length > 0) {
-            await loadVideoSource(episodeId, 'auto', category);
+            await loadVideoSource(episodeId, AUTO_SERVER, category);
         } else {
             playerContainer.innerHTML = `
                 <div class="player-placeholder">
@@ -608,7 +611,7 @@ async function loadVideoSource(episodeId, serverName, category) {
         let sourceData;
         
         // If no specific server is requested, use the fallback endpoint that tries all servers
-        if (!serverName || serverName === 'auto') {
+        if (!serverName || serverName === AUTO_SERVER) {
             try {
                 sourceData = await fetchAPI(`/aniwatch/episode-srcs-fallback?id=${encodeURIComponent(episodeId)}&category=${category}`);
                 
