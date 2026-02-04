@@ -667,7 +667,7 @@ console.log(data);
 #### Endpoint
 
 ```sh
-https://api-anime-rouge.vercel.app/anime/episode-srcs?id={episodeId}&server={server}&category={category}
+https://api-anime-rouge.vercel.app/aniwatch/episode-srcs?id={episodeId}&server={server}&category={category}
 ```
 
 #### Query Parameters
