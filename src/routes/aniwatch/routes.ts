@@ -61,7 +61,7 @@ aniwatch_router.get(
   getEpisodeServersInfo,
 );
 
-// /aniwatch/episode-srcs?id=${episodeId}?server=${server}&category=${category (dub or sub)}
+// /aniwatch/episode-srcs?id=${episodeId}&server=${server}&category=${category (dub or sub)}
 aniwatch_router.get(
   "/episode-srcs",
   cacheManager.middleware({
