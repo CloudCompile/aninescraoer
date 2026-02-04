@@ -12,7 +12,9 @@ const getAnimeMovies: RequestHandler = async (req, res) => {
     ////////////////////////////////////
     console.log(err); // for TESTING//
     ////////////////////////////////////
-    res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch anime movies" });
+    if (!res.headersSent) {
+      res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch anime movies" });
+    }
   }
 };
 

@@ -16,7 +16,9 @@ const getEpisodesInfo: RequestHandler = async (req, res) => {
     ////////////////////////////////////
     console.log(err); // for TESTING//
     ////////////////////////////////////
-    res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch episodes" });
+    if (!res.headersSent) {
+      res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch episodes" });
+    }
   }
 };
 

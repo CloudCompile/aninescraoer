@@ -12,7 +12,9 @@ const getCompletedAnimes: RequestHandler = async (req, res) => {
     ////////////////////////////////////
     console.log(err); // for TESTING//
     ////////////////////////////////////
-    res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch completed anime" });
+    if (!res.headersSent) {
+      res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch completed anime" });
+    }
   }
 };
 

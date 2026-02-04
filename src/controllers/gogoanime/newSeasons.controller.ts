@@ -12,7 +12,9 @@ const getNewSeasons: RequestHandler = async (req, res) => {
     ////////////////////////////////////
     console.log(err); // for TESTING//
     ////////////////////////////////////
-    res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch new seasons" });
+    if (!res.headersSent) {
+      res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch new seasons" });
+    }
   }
 };
 
