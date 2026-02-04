@@ -23,5 +23,6 @@
     "verbatimModuleSyntax": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false
-  }
+  },
+  "exclude": ["api", "docs", "build", "node_modules"]
 }

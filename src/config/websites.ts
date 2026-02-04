@@ -11,9 +11,10 @@ type Websites = Record<string, AnimeWebsiteConfig>;
 // anime websites and their clones
 export const websites_collection: Websites = {
   AniWatch: {
-    BASE: "https://aniwatchtv.to",
+    BASE: "https://hianime.to",
     CLONES: {
       HiAnime: [
+        "https://aniwatchtv.to",
         "https://hianimez.is",
         "https://hianimez.to",
         "https://hianime.nz",
