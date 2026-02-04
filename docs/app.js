@@ -65,8 +65,8 @@ function renderHomePage(data) {
     let html = '';
     
     // Spotlight Section
-    if (data.spotlightAnimes && data.spotlightAnimes.length > 0) {
-        html += renderSpotlight(data.spotlightAnimes.slice(0, 5));
+    if (data.spotLightAnimes && data.spotLightAnimes.length > 0) {
+        html += renderSpotlight(data.spotLightAnimes.slice(0, 5));
     }
     
     // Latest Episodes
@@ -120,8 +120,8 @@ function renderHomePage(data) {
     mainContent.innerHTML = html;
     
     // Start spotlight rotation
-    if (data.spotlightAnimes && data.spotlightAnimes.length > 0) {
-        startSpotlightRotation(data.spotlightAnimes.length);
+    if (data.spotLightAnimes && data.spotLightAnimes.length > 0) {
+        startSpotlightRotation(data.spotLightAnimes.length);
     }
 }
 
