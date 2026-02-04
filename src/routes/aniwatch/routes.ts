@@ -7,6 +7,7 @@ import {
   getEpisodesInfo,
   getEpisodeServersInfo,
   getAnimeEpisodeSourcesInfo,
+  getAnimeEpisodeSourcesWithFallback,
   getatozPage,
 } from "../../controllers/aniwatch/controllers";
 import { cacheManager } from "../../middlewares/cache";
@@ -69,6 +70,17 @@ aniwatch_router.get(
     keyParams: ["id", "category", "server"],
   }),
   getAnimeEpisodeSourcesInfo,
+);
+
+// /aniwatch/episode-srcs-fallback?id=${episodeId}&category=${category (dub or sub)}
+// This endpoint tries multiple servers in priority order until one succeeds
+aniwatch_router.get(
+  "/episode-srcs-fallback",
+  cacheManager.middleware({
+    duration: 1800, // 30 minutes cache
+    keyParams: ["id", "category"],
+  }),
+  getAnimeEpisodeSourcesWithFallback,
 );
 
 //  aniwatch/:category?page=${page}

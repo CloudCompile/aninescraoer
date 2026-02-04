@@ -5,6 +5,7 @@ import { getCategoryPage } from "./categoryController";
 import { getEpisodesInfo } from "./episodesController";
 import { getEpisodeServersInfo } from "./episodeServersController";
 import { getAnimeEpisodeSourcesInfo } from "./episodeServerSourcesController";
+import { getAnimeEpisodeSourcesWithFallback } from "./episodeSourcesWithFallbackController";
 import { getatozPage } from "./atozController";
 
 export {
@@ -15,5 +16,6 @@ export {
   getEpisodesInfo,
   getEpisodeServersInfo,
   getAnimeEpisodeSourcesInfo,
+  getAnimeEpisodeSourcesWithFallback,
   getatozPage,
 };
