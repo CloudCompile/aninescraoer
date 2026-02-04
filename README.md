@@ -44,7 +44,7 @@ To enable GitHub Pages:
 | `/aniwatch/anime/:id`                                   | 1 month (3600 * 24 * 31) |
 | `/aniwatch/episodes/:id`                                | 1 day (3600 * 24)     |
 | `/aniwatch/servers?id=${id}`                             | 1 day (3600 * 24)    |
-| `/aniwatch/episode-srcs?id=${episodeId}?server=${server}&category=${category}` | 30 minutes (1800)     |
+| `/aniwatch/episode-srcs?id=${episodeId}&server=${server}&category=${category}` | 30 minutes (1800)     |
 | `/aniwatch/:category?page=${page}`                      | 1 day (3600 * 24)     |
 | `/gogoanime/home`                                       | 1 day (3600 * 24)     |
 | `/gogoanime/search?keyword=${query}&page=${page}`        | 1 hour (3600)         |
@@ -632,7 +632,7 @@ one-piece-100?ep=84802
 
 ```javascript
 const res = await fetch(
-  "https://api-anime-rouge.vercel.app/aniwatch/servers?id=one-piece-100?ep=84802"
+  "https://api-anime-rouge.vercel.app/aniwatch/servers?id=" + encodeURIComponent("one-piece-100?ep=84802")
 );
 const data = await res.json();
 console.log(data);
@@ -682,7 +682,7 @@ https://api-anime-rouge.vercel.app/aniwatch/episode-srcs?id={episodeId}&server={
 
 ```javascript
 const res = await fetch(
-  "https://api-anime-rouge.vercel.app/aniwatch/episode-srcs?id=solo-leveling-18718?ep=120094&server=vidstreaming&category=sub"
+  "https://api-anime-rouge.vercel.app/aniwatch/episode-srcs?id=" + encodeURIComponent("solo-leveling-18718?ep=120094") + "&server=vidstreaming&category=sub"
 );
 const data = await res.json();
 console.log(data);

@@ -512,7 +512,7 @@ async function playEpisode(episodeId, episodeNo) {
     
     try {
         // Get servers
-        const serversData = await fetchAPI(`/aniwatch/servers?id=${episodeId}`);
+        const serversData = await fetchAPI(`/aniwatch/servers?id=${encodeURIComponent(episodeId)}`);
         
         // Update player info
         const playerInfo = document.getElementById('playerInfo');
@@ -609,7 +609,7 @@ async function loadVideoSource(episodeId, serverName, category) {
     `;
     
     try {
-        const sourceData = await fetchAPI(`/aniwatch/episode-srcs?id=${episodeId}&server=${serverName}&category=${category}`);
+        const sourceData = await fetchAPI(`/aniwatch/episode-srcs?id=${encodeURIComponent(episodeId)}&server=${serverName}&category=${category}`);
         
         if (sourceData.sources && sourceData.sources.length > 0) {
             // Find the best source (prefer HLS/m3u8)
