@@ -1,5 +1,6 @@
 import { scrapeEpisodePage } from "../../scrapers/gogoanime/scrappers";
 import type { RequestHandler } from "express";
+import { getErrorStatus, getErrorMessage } from "../../utils/error";
 
 const getAnimeEpisodes: RequestHandler = async (req, res) => {
   try {
@@ -11,7 +12,7 @@ const getAnimeEpisodes: RequestHandler = async (req, res) => {
     console.log(err); // for TESTING//
     ////////////////////////////////////
     if (!res.headersSent) {
-      res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch anime episodes" });
+      res.status(getErrorStatus(err)).json({ error: getErrorMessage(err, "Failed to fetch anime episodes") });
     }
   }
 };

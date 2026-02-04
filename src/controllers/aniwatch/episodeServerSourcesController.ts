@@ -6,6 +6,7 @@ import { scrapeAnimeEpisodeSources } from "../../scrapers/aniwatch/scrapers";
 import { URL_fn } from "../../utils/aniwatch/constants";
 import { headers } from "../../config/headers";
 import { type AnimeServers, Servers } from "../../types/aniwatch/anime";
+import { getErrorStatus, getErrorMessage } from "../../utils/error";
 
 type AnilistID = number | null;
 type MalID = number | null;
@@ -70,7 +71,7 @@ const getAnimeEpisodeSourcesInfo: RequestHandler = async (req, res) => {
     console.log(err); // for TESTING//
     ////////////////////////////////////
     if (!res.headersSent) {
-      res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch episode sources" });
+      res.status(getErrorStatus(err)).json({ error: getErrorMessage(err, "Failed to fetch episode sources") });
     }
   }
 };

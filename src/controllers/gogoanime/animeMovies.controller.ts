@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import { scrapeAnimeMovies } from "../../scrapers/gogoanime/scrappers";
+import { getErrorStatus, getErrorMessage } from "../../utils/error";
 
 const getAnimeMovies: RequestHandler = async (req, res) => {
   try {
@@ -13,7 +14,7 @@ const getAnimeMovies: RequestHandler = async (req, res) => {
     console.log(err); // for TESTING//
     ////////////////////////////////////
     if (!res.headersSent) {
-      res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch anime movies" });
+      res.status(getErrorStatus(err)).json({ error: getErrorMessage(err, "Failed to fetch anime movies") });
     }
   }
 };

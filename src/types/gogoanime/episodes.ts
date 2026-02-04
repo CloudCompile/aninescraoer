@@ -1,4 +1,4 @@
-import type { Episode } from "../goganime/anime";
+import type { Episode } from "./anime";
 
 export interface ScrapedEpisodes {
   episodes: Episode[];

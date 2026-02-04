@@ -1,6 +1,7 @@
 import { scrapeSearchPage } from "../../scrapers/aniwatch/search";
 import createHttpError from "http-errors";
 import type { RequestHandler } from "express";
+import { getErrorStatus, getErrorMessage } from "../../utils/error";
 
 const getSearchPageInfo: RequestHandler = async (req, res) => {
   try {
@@ -22,7 +23,7 @@ const getSearchPageInfo: RequestHandler = async (req, res) => {
     console.log(err); // for TESTING//
     ////////////////////////////////////
     if (!res.headersSent) {
-      res.status(err?.status || 500).json({ error: err?.message || "Failed to search anime" });
+      res.status(getErrorStatus(err)).json({ error: getErrorMessage(err, "Failed to search anime") });
     }
   }
 };

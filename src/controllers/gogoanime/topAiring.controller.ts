@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import { scrapeTopAiring } from "../../scrapers/gogoanime/scrappers";
+import { getErrorStatus, getErrorMessage } from "../../utils/error";
 
 const getTopAiring: RequestHandler = async (req, res) => {
   try {
@@ -13,7 +14,7 @@ const getTopAiring: RequestHandler = async (req, res) => {
     console.log(err); // for TESTING//
     ////////////////////////////////////
     if (!res.headersSent) {
-      res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch top airing anime" });
+      res.status(getErrorStatus(err)).json({ error: getErrorMessage(err, "Failed to fetch top airing anime") });
     }
   }
 };

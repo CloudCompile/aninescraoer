@@ -1,6 +1,7 @@
 import createHttpError from "http-errors";
 import { type RequestHandler } from "express";
 import { scrapeEpisodeServersPage } from "../../scrapers/aniwatch/scrapers";
+import { getErrorStatus, getErrorMessage } from "../../utils/error";
 
 const getEpisodeServersInfo: RequestHandler = async (req, res) => {
   try {
@@ -19,7 +20,7 @@ const getEpisodeServersInfo: RequestHandler = async (req, res) => {
     console.log(err); // for TESTING//
     ////////////////////////////////////
     if (!res.headersSent) {
-      res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch episode servers" });
+      res.status(getErrorStatus(err)).json({ error: getErrorMessage(err, "Failed to fetch episode servers") });
     }
   }
 };
