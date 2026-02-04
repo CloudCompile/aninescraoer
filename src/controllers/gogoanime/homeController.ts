@@ -9,7 +9,7 @@ const getHomePageInfo: RequestHandler = async (_req, res) => {
     ////////////////////////////////////
     console.log(err); // for TESTING//
     ////////////////////////////////////
-    res.status(err?.status || 500).json({ error: err?.message || "Something went wrong" });
+    res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch home page data" });
   }
 };
 

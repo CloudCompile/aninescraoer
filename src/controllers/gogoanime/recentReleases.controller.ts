@@ -12,7 +12,7 @@ const getRecentReleases: RequestHandler = async (req, res) => {
     ////////////////////////////////////
     console.log(err); // for TESTING//
     ////////////////////////////////////
-    res.status(err?.status || 500).json({ error: err?.message || "Something went wrong" });
+    res.status(err?.status || 500).json({ error: err?.message || "Failed to fetch recent releases" });
   }
 };
 
