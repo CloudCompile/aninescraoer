@@ -1,6 +1,9 @@
 // API Base URL - using the deployed Vercel API
 const API_BASE = 'https://aninescraper.vercel.app';
 
+// Constants
+const AUTO_SERVER = 'auto';
+
 // State management
 let currentAnimeId = null;
 let currentEpisodeId = null;
@@ -523,14 +526,10 @@ async function playEpisode(episodeId, episodeNo) {
         // Render server buttons
         renderServerButtons(serversData, episodeId);
         
-        // Auto-select first server (prefer sub)
-        const subServers = serversData.sub || [];
-        const dubServers = serversData.dub || [];
-        
-        if (subServers.length > 0) {
-            await loadVideoSource(episodeId, subServers[0].serverName, 'sub');
-        } else if (dubServers.length > 0) {
-            await loadVideoSource(episodeId, dubServers[0].serverName, 'dub');
+        // Auto-select using fallback endpoint (tries all servers)
+        const category = (serversData.sub && serversData.sub.length > 0) ? 'sub' : 'dub';
+        if (serversData.sub.length > 0 || serversData.dub.length > 0) {
+            await loadVideoSource(episodeId, AUTO_SERVER, category);
         } else {
             playerContainer.innerHTML = `
                 <div class="player-placeholder">
@@ -609,7 +608,30 @@ async function loadVideoSource(episodeId, serverName, category) {
     `;
     
     try {
-        const sourceData = await fetchAPI(`/aniwatch/episode-srcs?id=${encodeURIComponent(episodeId)}&server=${serverName}&category=${category}`);
+        let sourceData;
+        
+        // If no specific server is requested, use the fallback endpoint that tries all servers
+        if (!serverName || serverName === AUTO_SERVER) {
+            try {
+                sourceData = await fetchAPI(`/aniwatch/episode-srcs-fallback?id=${encodeURIComponent(episodeId)}&category=${category}`);
+                
+                // Update UI to show which server was used
+                if (sourceData.serverUsed) {
+                    const serverBtn = document.querySelector(`.server-btn[data-server="${sourceData.serverUsed}"][data-category="${category}"]`);
+                    if (serverBtn) {
+                        document.querySelectorAll('.server-btn').forEach(btn => btn.classList.remove('active'));
+                        serverBtn.classList.add('active');
+                    }
+                }
+            } catch (fallbackError) {
+                console.error('Fallback endpoint failed, trying specific server:', fallbackError);
+                // Fall back to trying specific server if fallback endpoint fails
+                sourceData = await fetchAPI(`/aniwatch/episode-srcs?id=${encodeURIComponent(episodeId)}&server=${serverName}&category=${category}`);
+            }
+        } else {
+            // Use specific server if requested
+            sourceData = await fetchAPI(`/aniwatch/episode-srcs?id=${encodeURIComponent(episodeId)}&server=${serverName}&category=${category}`);
+        }
         
         if (sourceData.sources && sourceData.sources.length > 0) {
             // Find the best source (prefer HLS/m3u8)
