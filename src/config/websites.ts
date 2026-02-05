@@ -20,6 +20,7 @@ export const websites_collection: Websites = {
         "https://hianime.nz",
         "https://hianime.bz",
         "https://hianime.pe",
+        "https://9animetv.to",
       ],
     },
   },

@@ -14,6 +14,7 @@ type MalID = number | null;
 
 // Define server priority order - try these servers in this order
 const SERVER_PRIORITY: AnimeServers[] = [
+  Servers.VidCloud,
   Servers.HD1,
   Servers.HD2,
   Servers.VidStreaming,
