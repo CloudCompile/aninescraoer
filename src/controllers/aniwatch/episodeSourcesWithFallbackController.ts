@@ -13,6 +13,7 @@ type AnilistID = number | null;
 type MalID = number | null;
 
 // Define server priority order - try these servers in this order
+// VidCloud is prioritized first for better reliability and compatibility with 9animetv.to
 const SERVER_PRIORITY: AnimeServers[] = [
   Servers.VidCloud,
   Servers.HD1,
