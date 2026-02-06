@@ -1231,7 +1231,7 @@ console.log(data);
 #### Endpoint
 
 ```sh
-https://api-anime-rouge.vercel.app/imdb/search?query=${query}&type=${movie|show}&limit=${limit}
+https://api-anime-rouge.vercel.app/imdb/search?query={query}&type={type}&limit={limit}
 ```
 
 #### Query Parameters
@@ -1240,7 +1240,7 @@ https://api-anime-rouge.vercel.app/imdb/search?query=${query}&type=${movie|show}
 | :-------: | :----: | :----------------------------------: | :-------: | :--------: |
 |  `query`  | string |     Search query for the title       |    YES    |   -----    |
 |  `type`   | string | Filter by `movie` or `show` results  |    NO     |   `all`    |
-|  `limit`  | number |     Maximum results (1-50)           |    NO     | API default |
+|  `limit`  | number |     Maximum results (1-50)           |    NO     |    `20`     |
 
 #### Request sample
 
