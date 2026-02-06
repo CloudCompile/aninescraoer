@@ -38,6 +38,7 @@ To enable GitHub Pages:
 
 | Routes                                                   | Caching Duration      |
 |---------------------------------------------------------|-----------------------|
+| `/imdb/search?query=${query}&type=${type}&limit=${limit}` | 1 hour (3600)         |
 | `/aniwatch/`                                            | 1 day (3600 * 24)     |
 | `/aniwatch/az-list?page=${page}`                        | 1 day (3600 * 24)     |
 | `/aniwatch/search?keyword=$(query)&page=${page}`         | 1 hour (3600)         |
@@ -80,6 +81,7 @@ kickassanime    | <b>IN FUTURE</b>
 
 - [AniWatch](#aniwatch)
 - [GogoAnime](#gogoanime)
+- [IMDb](#imdb)
 
 ##  <span id="aniwatch">AniWatch</span>
 
@@ -1216,6 +1218,45 @@ console.log(data);
     "other_name": string,
     "episodes": number
   }
+}
+```
+
+<break>
+#############################################################################
+
+## <span id="imdb">IMDb</span>
+
+### `GET` IMDb Title IDs
+
+#### Endpoint
+
+```sh
+https://api-anime-rouge.vercel.app/imdb/search?query={query}&type={type}&limit={limit}
+```
+
+#### Query Parameters
+
+| Parameter | Type | Description | Required? | Default |
+| :-------: | :--: | :---------: | :-------: | :-----: |
+| `query` | string | Search query for the title | YES | ----- |
+| `type` | string | Filter by `movie` or `show` results | NO | `all` |
+| `limit` | number | Maximum results (1-50) | NO | `20` |
+
+#### Request sample
+
+```javascript
+const res = await fetch(
+  "https://api-anime-rouge.vercel.app/imdb/search?query=one+piece&type=show&limit=5"
+);
+const data = await res.json();
+console.log(data);
+```
+
+#### Response Schema
+
+```typescript
+{
+  "ids": string[]
 }
 ```
 
