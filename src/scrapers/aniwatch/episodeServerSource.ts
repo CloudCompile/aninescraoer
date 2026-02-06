@@ -43,9 +43,27 @@ export const scrapeAnimeEpisodeSources = async (
       case Servers.VidSrc:
       case Servers.HD1:
       case Servers.HD2:
-        return {
-          ...(await new MegaCloud().extract2(serverUrl)),
-        };
+        try {
+          const megacloudResult = await new MegaCloud().extract2(serverUrl);
+          // Check if we got valid sources
+          if (megacloudResult && megacloudResult.sources && megacloudResult.sources.length > 0) {
+            return { ...megacloudResult };
+          }
+          // If no sources, fall back to RapidCloud
+          console.log(`MegaCloud returned no sources for ${server}, falling back to RapidCloud`);
+          return {
+            headers: { Referer: serverUrl.href },
+            ...(await new RapidCloud().extract(serverUrl)),
+          };
+        } catch (megacloudError) {
+          // MegaCloud extraction failed, fall back to RapidCloud
+          console.log(`MegaCloud extraction failed for ${server}:`, megacloudError);
+          console.log(`Falling back to RapidCloud extractor`);
+          return {
+            headers: { Referer: serverUrl.href },
+            ...(await new RapidCloud().extract(serverUrl)),
+          };
+        }
       case Servers.StreamSB:
         return {
           headers: {
