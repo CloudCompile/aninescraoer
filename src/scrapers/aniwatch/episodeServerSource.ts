@@ -41,6 +41,8 @@ export const scrapeAnimeEpisodeSources = async (
       case Servers.VidStreaming:
       case Servers.VidCloud:
       case Servers.VidSrc:
+      case Servers.HD1:
+      case Servers.HD2:
         return {
           ...(await new MegaCloud().extract2(serverUrl)),
         };
