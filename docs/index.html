@@ -3,43 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anime Streaming - Watch Free Anime</title>
+    <title>YouTube API & Downloader - Documentation</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📺</text></svg>">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+        }
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .endpoint h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        .endpoint code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .endpoint pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .feature {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #5568d3;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <a href="#" class="logo" onclick="showHome(); return false;">
-                <span class="logo-icon">🎬</span>
-                <span class="logo-text">AnimeStream</span>
-            </a>
-            <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Search anime..." onkeyup="handleSearchKeyup(event)">
-                <button onclick="searchAnime()" id="searchBtn">🔍</button>
+    <div class="container">
+        <h1>📺 YouTube API & Downloader</h1>
+        <p class="subtitle">A powerful YouTube API for searching, downloading, and streaming videos</p>
+
+        <div class="feature-grid">
+            <div class="feature">
+                <div class="feature-icon">🔍</div>
+                <h3>Search</h3>
+                <p>Search for videos, channels, and playlists</p>
             </div>
-            <nav>
-                <a href="#" onclick="showHome(); return false;">Home</a>
-                <a href="#" onclick="showCategory('top-airing'); return false;">Top Airing</a>
-                <a href="#" onclick="showCategory('most-popular'); return false;">Popular</a>
-                <a href="#" onclick="showCategory('movie'); return false;">Movies</a>
-            </nav>
+            <div class="feature">
+                <div class="feature-icon">📊</div>
+                <h3>Video Info</h3>
+                <p>Get detailed information about any video</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⬇️</div>
+                <h3>Download</h3>
+                <p>Download videos in various qualities</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📺</div>
+                <h3>Stream</h3>
+                <p>Stream videos directly through the API</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📋</div>
+                <h3>Playlists</h3>
+                <p>Get playlist information and videos</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎬</div>
+                <h3>IMDb</h3>
+                <p>Search IMDb for additional metadata</p>
+            </div>
         </div>
-    </header>
 
-    <main id="mainContent">
-        <!-- Content will be dynamically loaded here -->
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Loading...</p>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="https://github.com/CloudCompile/aninescraoer" class="btn">View on GitHub</a>
+            <a href="https://github.com/CloudCompile/aninescraoer/blob/main/README.md" class="btn">Full Documentation</a>
         </div>
-    </main>
 
-    <footer>
-        <p>Built with ❤️ using <a href="https://api-anime-rouge.vercel.app" target="_blank">Anime API</a></p>
-        <p>This is a fan-made project for educational purposes only.</p>
-    </footer>
+        <div class="endpoint">
+            <h3>🔍 Search Videos</h3>
+            <p>Search for YouTube videos, channels, or playlists</p>
+            <code>GET /youtube/search?query={query}&limit={limit}&type={type}</code>
+            <pre>// Example
+fetch('/youtube/search?query=javascript+tutorial&limit=10&type=video')
+  .then(res => res.json())
+  .then(data => console.log(data));</pre>
+        </div>
 
-    <script src="app.js"></script>
+        <div class="endpoint">
+            <h3>📊 Get Video Info</h3>
+            <p>Get detailed information about a YouTube video</p>
+            <code>GET /youtube/info/{videoId}</code>
+            <pre>// Example
+fetch('/youtube/info/dQw4w9WgXcQ')
+  .then(res => res.json())
+  .then(data => console.log(data));</pre>
+        </div>
+
+        <div class="endpoint">
+            <h3>⬇️ Download Video</h3>
+            <p>Download a YouTube video</p>
+            <code>GET /youtube/download/{videoId}?quality={quality}&filter={filter}</code>
+            <pre>// Example - Download highest quality
+window.location.href = '/youtube/download/dQw4w9WgXcQ?quality=highest';
+
+// Example - Download audio only
+window.location.href = '/youtube/download/dQw4w9WgXcQ?filter=audioonly';</pre>
+        </div>
+
+        <div class="endpoint">
+            <h3>📺 Stream Video</h3>
+            <p>Stream a YouTube video without downloading</p>
+            <code>GET /youtube/stream/{videoId}?quality={quality}</code>
+            <pre>// Example - Use in HTML video player
+&lt;video controls&gt;
+  &lt;source src="/youtube/stream/dQw4w9WgXcQ" type="video/mp4"&gt;
+&lt;/video&gt;</pre>
+        </div>
+
+        <div class="endpoint">
+            <h3>📋 Get Playlist Info</h3>
+            <p>Get information about a YouTube playlist</p>
+            <code>GET /youtube/playlist/{playlistId}?limit={limit}</code>
+            <pre>// Example
+fetch('/youtube/playlist/PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf?limit=10')
+  .then(res => res.json())
+  .then(data => console.log(data));</pre>
+        </div>
+
+        <footer>
+            <p><strong>⚠️ Disclaimer:</strong> This API is for educational purposes only. Please respect YouTube's Terms of Service and copyright laws.</p>
+            <p>Built with ❤️ using TypeScript, Express, and Node.js</p>
+        </footer>
+    </div>
 </body>
 </html>
