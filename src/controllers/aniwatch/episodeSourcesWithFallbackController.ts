@@ -18,6 +18,7 @@ const SERVER_PRIORITY: AnimeServers[] = [
   Servers.VidCloud,
   Servers.HD1,
   Servers.HD2,
+  Servers.HD3,
   Servers.VidStreaming,
   Servers.MegaCloud,
   Servers.StreamSB,

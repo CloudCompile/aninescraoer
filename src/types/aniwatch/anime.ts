@@ -172,6 +172,7 @@ interface ISource {
 type AnimeServers =
   | "hd-1"
   | "hd-2"
+  | "hd-3"
   | "vidstreaming"
   | "megacloud"
   | "streamsb"
@@ -188,6 +189,7 @@ enum Servers {
   VidSrc = "vidsrc",
   HD1 = "hd-1",
   HD2 = "hd-2",
+  HD3 = "hd-3",
   AsianLoad = "asianload",
   GogoCDN = "gogocdn",
   MixDrop = "mixdrop",
