@@ -38,6 +38,7 @@ To enable GitHub Pages:
 
 | Routes                                                   | Caching Duration      |
 |---------------------------------------------------------|-----------------------|
+| `/imdb/search?query=${query}&type=${type}&limit=${limit}` | 1 hour (3600)         |
 | `/aniwatch/`                                            | 1 day (3600 * 24)     |
 | `/aniwatch/az-list?page=${page}`                        | 1 day (3600 * 24)     |
 | `/aniwatch/search?keyword=$(query)&page=${page}`         | 1 hour (3600)         |

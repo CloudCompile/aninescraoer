@@ -126,6 +126,26 @@ GET /aniwatch/vidsrc?tmdbId=202250&season=1&episode=5
 }
 ```
 
+#### Search IMDb IDs
+- **Endpoint**: `/imdb/search`
+- **Method**: GET
+- **Parameters**:
+  - `query` (required): Search query for show or movie titles
+  - `type` (optional): `show` or `movie` to filter results
+  - `limit` (optional): Limit results (1-50)
+
+**Example Request:**
+```bash
+GET /imdb/search?query=spirited%20away&type=movie&limit=5
+```
+
+**Example Response:**
+```json
+{
+  "ids": ["tt0245429"]
+}
+```
+
 ## Adding More Anime
 
 To add more anime to the mapping database:
@@ -168,7 +188,7 @@ To add more anime to the mapping database:
 
 ## Future Enhancements
 
-- [ ] Automatic IMDb/TMDb lookup using external APIs
+- [x] IMDb lookup endpoint for finding title IDs
 - [ ] Better season detection for multi-season anime
 - [ ] User-contributed mapping database
 - [ ] Integration with AniList/MAL APIs for automatic mapping
