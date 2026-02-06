@@ -1240,7 +1240,7 @@ https://api-anime-rouge.vercel.app/imdb/search?query={query}&type={type}&limit={
 | :-------: | :----: | :----------------------------------: | :-------: | :--------: |
 |  `query`  | string |     Search query for the title       |    YES    |   -----    |
 |  `type`   | string | Filter by `movie` or `show` results  |    NO     |   `all`    |
-|  `limit`  | number |     Maximum results (1-50)           |    NO     |    `20`     |
+|  `limit`  | number |     Maximum results (1-50)           |    NO     |   `20`   |
 
 #### Request sample
 
