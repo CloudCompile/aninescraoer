@@ -54,7 +54,8 @@ export const searchImdbTitleIds = async (
     if (err instanceof AxiosError) {
       throw createHttpError(
         err?.response?.status || 500,
-        err?.response?.statusText || "Something went wrong",
+        err?.response?.statusText ||
+          "Failed to fetch search results from IMDb API",
       );
     }
     throw createHttpError.InternalServerError("Internal server error");

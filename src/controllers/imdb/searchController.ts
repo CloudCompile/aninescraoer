@@ -69,7 +69,7 @@ export const getImdbSearchIds: RequestHandler = async (req, res) => {
     const ids = await searchImdbTitleIds(query, limit, category);
     res.status(200).json({ ids });
   } catch (err) {
-    console.log(err);
+    console.error("IMDb search error:", err);
     if (!res.headersSent) {
       res
         .status(getErrorStatus(err))
