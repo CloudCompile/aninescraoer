@@ -702,7 +702,9 @@ async function loadWasm(url: any) {
   const response = fetch(url, {
     headers: {
       Referer: fake_window.location.href,
-      Host: "megacloud.tv",
+      // Important: MegaCloud embed domains change (e.g. megacloud.blog).
+      // Derive host dynamically from the current configured embed origin.
+      Host: new URL(embed_origin).host,
     },
   });
 
