@@ -1,1278 +1,350 @@
-# ⚡Anime-API⚡
+# ⚡YouTube API & Downloader⚡
 <p align="center">
-  <img src="https://skillicons.dev/icons?i=ts,express,nodejs,docker,html,css,js" />
+  <img src="https://skillicons.dev/icons?i=ts,express,nodejs,docker" />
   <br/>
-  <a href="https://api-anime-rouge.vercel.app"><kbd>api-anime-rouge.vercel.app</kbd></a>
+  <a href="https://api-anime-rouge.vercel.app"><kbd>YouTube API & Downloader</kbd></a>
 </p>
 <br/><br/>
 
-Check it out at <a href="https://api-anime-rouge.vercel.app"><kbd>api-anime-rouge.vercel.app</kbd></a>.
+A powerful YouTube API built with TypeScript, Express, and Node.js. Search videos, get video information, download videos, stream content, and manage playlists.
 
-## 🎬 Frontend - Watch Anime
+## 🚀 Features
 
-A frontend web application is available on GitHub Pages that allows you to watch anime using this API.
+- 🔍 **Search** - Search for videos, channels, and playlists
+- 📊 **Video Info** - Get detailed information about any YouTube video
+- ⬇️ **Download** - Download videos in various qualities and formats
+- 📺 **Stream** - Stream videos directly through the API
+- 📋 **Playlists** - Get playlist information and videos
+- 🎬 **IMDb Integration** - Search IMDb for additional metadata
 
-**🌐 Live Demo:** [Watch Anime on GitHub Pages](https://cloudcompile.github.io/aninescraoer/)
+## 📦 Installation
 
-### Features
-- 🏠 **Home Page** - Spotlight, trending, and latest anime
-- 🔍 **Search** - Find anime by name
-- 📺 **Watch Episodes** - Stream anime episodes with multiple server options
-- 📱 **Responsive Design** - Works on desktop, tablet, and mobile
-- 🌙 **Dark Theme** - Easy on the eyes
+```bash
+# Clone the repository
+git clone https://github.com/CloudCompile/aninescraoer.git
+cd aninescraoer
 
-### Frontend Setup
+# Install dependencies
+npm install
 
-The frontend is located in the `/docs` folder and is automatically deployed to GitHub Pages via GitHub Actions.
+# Start development server
+npm run dev
 
-To enable GitHub Pages:
-1. Go to your repository settings
-2. Navigate to "Pages" 
-3. Under "Build and deployment", select "GitHub Actions"
-4. The workflow will automatically deploy on push to `main` branch
+# Build for production
+npm run build
 
-<break>
+# Start production server
+npm start
+```
 
->[!IMPORTANT]
->Local Caching is implemented
+## 🔧 Environment Variables
 
-| Routes                                                   | Caching Duration      |
-|---------------------------------------------------------|-----------------------|
-| `/imdb/search?query=${query}&type=${type}&limit=${limit}` | 1 hour (3600)         |
-| `/aniwatch/`                                            | 1 day (3600 * 24)     |
-| `/aniwatch/az-list?page=${page}`                        | 1 day (3600 * 24)     |
-| `/aniwatch/search?keyword=$(query)&page=${page}`         | 1 hour (3600)         |
-| `/aniwatch/anime/:id`                                   | 1 month (3600 * 24 * 31) |
-| `/aniwatch/episodes/:id`                                | 1 day (3600 * 24)     |
-| `/aniwatch/servers?id=${id}`                             | 1 day (3600 * 24)    |
-| `/aniwatch/episode-srcs?id=${episodeId}&server=${server}&category=${category}` | 30 minutes (1800)     |
-| `/aniwatch/episode-srcs-fallback?id=${episodeId}&category=${category}` | 30 minutes (1800)     |
-| `/aniwatch/:category?page=${page}`                      | 1 day (3600 * 24)     |
-| `/gogoanime/home`                                       | 1 day (3600 * 24)     |
-| `/gogoanime/search?keyword=${query}&page=${page}`        | 1 hour (3600)         |
-| `/gogoanime/anime/:id`                                  | 1 day (3600 * 24)     |
-| `/gogoanime/recent-releases?page=${pageNo}`              | 1 day (3600 * 24)    |
-| `/gogoanime/new-seasons?page=${pageNo}`                  | 1 day (3600 * 24)     |
-| `/gogoanime/popular?page=${pageNo}`                      | 1 day (3600 * 24)     |
-| `/gogoanime/completed?page=${pageNo}`                    | 1 day (3600 * 24)     |
-| `/gogoanime/anime-movies?page=${pageNo}`                 | 1 day (3600 * 24)     |
-| `/gogoanime/top-airing?page=${pageNo}`                   | 1 day (3600 * 24)     |
+Create a `.env` file in the root directory:
 
+```env
+PORT=3001
+```
 
-### Deploy this project to Vercel
+## 📚 API Documentation
 
-Click the button below to deploy this project to your Vercel account:
+### Base URL
+```
+http://localhost:3001
+```
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/falcon71181/Anime-API)
+## YouTube Endpoints
 
+### 🔍 Search Videos
 
-## ⚡ Web Scraping Status
-
-Anime Websites  |    STATUS
---------------  | -------------
-aniwatch        | <b>DONE</b>
-gogoanime       | <b>WORKING ON IT</b>
-kickassanime    | <b>IN FUTURE</b>
-
->[!NOTE]
->More Websites Will be Added in Future
-
-## Index
-
-- [AniWatch](#aniwatch)
-- [GogoAnime](#gogoanime)
-- [IMDb](#imdb)
-
-##  <span id="aniwatch">AniWatch</span>
-
-### `GET` AniWatch Home Page
+Search for YouTube videos, channels, or playlists.
 
 #### Endpoint
-
-```url
-https://api-anime-rouge.vercel.app/aniwatch/
 ```
-
-#### Request sample
-
-```javascript
-const res = await fetch("https://api-anime-rouge.vercel.app/aniwatch/");
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-{
-  spotlightAnimes: [
-    {
-      id: string,
-      name: string,
-      rank: number,
-      img: string,
-      episodes: {
-        eps: number,
-        sub: number,
-        dub: number,
-      },
-      duration: string,
-      quality: string,
-      category: string,
-      releasedDay: string,
-      descriptions: string,
-    },
-    {...},
-  ],
-  trendingAnimes: [
-    {
-      id: string,
-      name: string,
-      img: string,
-    },
-    {...},
-  ],
-  latestEpisodes: [
-    {
-      id: string,
-      name: string,
-      img: string,
-      episodes: {
-        eps: number,
-        sub: number,
-        dub: number,
-      },
-      duration: string,
-      rated: boolean,
-    },
-    {...},
-  ],
-  top10Animes: {
-    day: [
-      {
-        id: string,
-        name: string,
-        rank: number,
-        img: string,
-        episodes: {
-          eps: number,
-          sub: number,
-          dub: number,
-        },
-      },
-      {...},
-    ],
-    week: [...],
-    month: [...]
-  },
-  featuredAnimes: {
-    topAiringAnimes: [
-        {
-            id: string,
-            name: string,
-            img: string,
-        },
-        {...},
-    ],
-    mostPopularAnimes: [
-        {
-            id: string,
-            name: string,
-            img: string,
-        },
-        {...},
-    ],
-    mostFavoriteAnimes: [
-        {
-            id: string,
-            name: string,
-            img: string,
-        },
-        {...},
-    ],
-    latestCompletedAnimes: [
-        {
-            id: string,
-            name: string,
-            img: string,
-        },
-        {...},
-    ],
-  },
-  topUpcomingAnimes: [
-    {
-      id: string,
-      name: string,
-      img: string,
-      episodes: {
-        eps: number,
-        sub: number,
-        dub: number,
-      },
-      duration: string,
-      rated: boolean,
-    },
-    {...},
-  ],
-  genres: string[]
-}
-```
-
-### `GET` AniWatch A to Z List Page
-
-#### Endpoint
-
-```url
-https://api-anime-rouge.vercel.app/aniwatch/az-list?page=${page}
+GET /youtube/search?query={query}&limit={limit}&type={type}
 ```
 
 #### Query Parameters
 
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|  `page`   | number |        Page No. of Search Page       |    YES    |    1    |
+| Parameter | Type | Description | Required | Default |
+|-----------|------|-------------|----------|---------|
+| `query` | string | Search query | YES | - |
+| `limit` | number | Maximum results (1-100) | NO | 20 |
+| `type` | string | Filter by type: `video`, `channel`, or `playlist` | NO | all |
 
-
-#### Request sample
-
-```typescript
-const resp = await fetch("https://api-anime-rouge.vercel.app/aniwatch/az-list?page=69");
-const data = await resp.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-[
-        {
-            "id": string,
-            "name": string,
-            "category": string,
-            "img": string,
-            "episodes": {
-                "eps": number,
-                "sub": number,
-                "dub": number
-            }
-        },
-        {...},
-],
-```
-
-### `GET` Anime About Info
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/aniwatch/anime/:id
-```
-
-#### Query Parameters
-
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|   `id`    | string |          The unique Anime ID         |    YES    |  -----  |
-
-> [!NOTE]
-> Anime ID should be In <kbd><b>Kebab Case</b></kbd>
-
-#### Request sample
-
+#### Example Request
 ```javascript
 const res = await fetch(
-  "https://api-anime-rouge.vercel.app/aniwatch/anime/jujutsu-kaisen-2nd-season-18413"
+  "http://localhost:3001/youtube/search?query=javascript+tutorial&limit=10&type=video"
 );
 const data = await res.json();
 console.log(data);
 ```
 
 #### Response Schema
-
-``` typescript
+```typescript
 {
-  "info": {
-        "id": string,
-        "anime_id": number,
-        "mal_id": number,
-        "al_id": number,
-        "name": string,
-        "img": string,
-        "rating": string,
-        "episodes": {
-            "eps": number,
-            "sub": number,
-            "dub": number
-        },
-        "category": string,
-        "quality": string,
-        "duration": string,
-        "description": string
+  "query": string,
+  "results": [
+    {
+      "type": "video" | "channel" | "playlist",
+      "id": string,
+      "title": string,
+      "thumbnail": string,
+      "channelName": string,
+      "channelId": string,
+      "duration": string,
+      "views": number,
+      "uploadedAt": string
+    }
+  ],
+  "total": number
+}
+```
+
+### 📊 Get Video Info
+
+Get detailed information about a specific YouTube video.
+
+#### Endpoint
+```
+GET /youtube/info/{videoId}
+GET /youtube/info?url={url}
+```
+
+#### Parameters
+
+| Parameter | Type | Description | Required |
+|-----------|------|-------------|----------|
+| `videoId` | string | YouTube video ID (path parameter) | YES (or url) |
+| `url` | string | Full YouTube URL (query parameter) | YES (or videoId) |
+
+#### Example Request
+```javascript
+// Using video ID
+const res = await fetch("http://localhost:3001/youtube/info/dQw4w9WgXcQ");
+
+// Using URL
+const res = await fetch(
+  "http://localhost:3001/youtube/info?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+);
+const data = await res.json();
+console.log(data);
+```
+
+#### Response Schema
+```typescript
+{
+  "videoId": string,
+  "title": string,
+  "description": string,
+  "thumbnail": string,
+  "duration": number,
+  "uploadDate": string,
+  "author": {
+    "name": string,
+    "channelId": string,
+    "channelUrl": string,
+    "thumbnails": Array<{ url: string, width: number, height: number }>
   },
-  "moreInfo": {
-        "Japanese:": string,
-        "Synonyms:": string,
-        "Aired:": string,
-        "Premiered:": string,
-        "Duration:": string,
-        "Status:": string,
-        "MAL Score:": string,
-        "Studios:": string[],
-        "Genres": string[],
-        "Producers": string[]
-    },
-  "seasons": [
-        {
-            "id": string,
-            "name": string,
-            "seasonTitle": string,
-            "img": string,
-            "isCurrent": boolean
-        },
-        {...},
+  "stats": {
+    "views": number,
+    "likes": number
   },
-  "relatedAnimes": [
-        {
-            "id": string,
-            "name": string,
-            "category": string,
-            "img": string,
-            "episodes": {
-                "eps": number,
-                "sub": number,
-                "dub": number
-            }
-        },
-        {...},
-    ],
-  "recommendedAnimes": [
-        {
-            "id": string,
-            "name": string,
-            "img": string,
-            "episodes": {
-                "eps": number,
-                "sub": number,
-                "dub": number
-            },
-            "duration": string,
-            "rated": boolean
-        },
-        {...},
-  ],
-  "mostPopularAnimes": [
-        {
-            "id": string,
-            "name": string,
-            "category": string,
-            "img": string,
-            "episodes": {
-                "eps": number,
-                "sub": number,
-                "dub": number
-            }
-        },
-        {...},
-  ],
-}
-```
-
-### `GET` Search Anime
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/aniwatch/search?keyword=$(query)&page=$(page)
-```
-
-#### Query Parameters
-
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|  `query`  | string |         Search Query for Anime       |    YES    |  -----  |
-|  `page`   | number |        Page No. of Search Page       |    YES    |    1    |
-> [!NOTE]
-> <div>Search Query should be In <kbd><b>Kebab Case</b></kbd></div>
-> <div>Page No should be a <kbd><b>Number</b></kbd></b></div>
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/aniwatch/search?keyword=one+piece&page=1"
-);
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-{
-  "animes": [
-        {
-            "id": string,
-            "name": string,
-            "img": string,
-            "episodes": {
-                "eps": number,
-                "sub": number,
-                "dub": number
-            },
-            "duration": string,
-            "rated": boolean
-        },
-        {...},
-  ],
-  "mostPopularAnimes": [
-        {
-            "id": string,
-            "name": string,
-            "category": string,
-            "img": string,
-            "episodes": {
-                "eps": number,
-                "sub": number,
-                "dub": number
-            }
-        },
-        {...},
-  ],
-  "currentPage": number,
-  "hasNextPage": boolean,
-  "totalPages": number,
-  "genres": string[]
-}
-```
-
-### `GET` Category Anime
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/aniwatch/:category?page=$(page)
-```
-
-#### Query Parameters
-
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-| `category`| string |         Search Query for Anime       |    YES    |  -----  |
-|  `page`   | number |        Page No. of Search Page       |    YES    |    1    |
-
-<break>
-
-> [!NOTE]
-> <div>category should be In <kbd><b>Kebab Case</b></kbd></div>
-> <div>Page No should be a <kbd><b>Number</b></kbd></b></div>
-
-<break>
-
-> [!TIP]
-> Add type to Category - "subbed-anime" | "dubbed-anime" | "tv" | "movie" | "most-popular" | "top-airing" | "ova" | "ona" | "special" | "events";
-
-<break>
-
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/aniwatch/ona?page=1"
-);
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-{
-  "animes": [
-        {
-            "id": string,
-            "name": string,
-            "img": string,
-            "episodes": {
-                "eps": number,
-                "sub": number,
-                "dub": number
-            },
-            "duration": string,
-            "rated": boolean
-        },
-        {...},
-  ],
-  "top10Animes": {
-        "day": [
-            {
-                "id": string,
-                "name": string,
-                "rank": number,
-                "img": string,
-                "episodes": {
-                    "eps": number,
-                    "sub": number,
-                    "dub": number
-                }
-            },
-            {..},
-        ],
-        "week": [
-            {
-                "id": string,
-                "name": string,
-                "rank": number,
-                "img": string,
-                "episodes": {
-                    "eps": number,
-                    "sub": number,
-                    "dub": number
-                }
-            },
-            {...},
-        ],
-        "month": [
-            {
-                "id": string,
-                "name": string,
-                "rank": number,
-                "img": string,
-                "episodes": {
-                    "eps": number,
-                    "sub": number,
-                    "dub": number
-                }
-            },
-            {...},
-        ],
-  "category": string,
-  "genres": string[],
-  "currentPage": number,
-  "hasNextPage": boolean,
-  "totalPages": number
-}
-```
-
-### `GET` Anime Episodes
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/aniwatch/episodes/:id
-```
-
-#### Query Parameters
-
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|    `id`   | string |               Anime ID               |    YES    |  -----  |
-
-<break>
-
-> [!NOTE]
-> <div>Anime ID should be In <kbd><b>Kebab Case</b></kbd></div>
-
-<break>
-
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/aniwatch/episodes/one-piece-100"
-);
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-{
-  "totalEpisodes": number,
-  "episodes": [
-      {
-          "name": string,
-          "episodeNo": number,
-          "episodeId": string,
-          "filler": boolean
-      },
-      {...},
+  "formats": [
+    {
+      "quality": string,
+      "url": string,
+      "mimeType": string,
+      "hasVideo": boolean,
+      "hasAudio": boolean,
+      "container": string,
+      "bitrate": number,
+      "qualityLabel": string,
+      "fps": number,
+      "width": number,
+      "height": number
+    }
   ]
 }
 ```
 
-### `GET` Anime Episodes Servers
+### ⬇️ Download Video
+
+Download a YouTube video.
 
 #### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/aniwatch/servers?id=${id}
+```
+GET /youtube/download/{videoId}?quality={quality}&filter={filter}
+GET /youtube/download?url={url}&quality={quality}&filter={filter}
 ```
 
-#### Query Parameters
+#### Parameters
 
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|    `id`   | string |              Episode ID              |    YES    |  -----  |
+| Parameter | Type | Description | Required | Default |
+|-----------|------|-------------|----------|---------|
+| `videoId` | string | YouTube video ID (path parameter) | YES (or url) | - |
+| `url` | string | Full YouTube URL (query parameter) | YES (or videoId) | - |
+| `quality` | string | Quality: `highest`, `lowest`, `highestaudio`, `lowestaudio` | NO | highest |
+| `filter` | string | Filter: `audioandvideo`, `videoonly`, `audioonly` | NO | - |
 
-<break>
+#### Example Request
+```javascript
+// Download highest quality
+const res = await fetch("http://localhost:3001/youtube/download/dQw4w9WgXcQ");
 
-> [!NOTE]
-> <div>Episode ID should be In <kbd><b>Kebab Case</b></kbd></div>
-
-important
-
-> [!NOTE]
-> <div><kbd><b>id</b></kbd> is a combination of AnimeId and EpisodeId</div>
-
-eg.
-```bash
-one-piece-100?ep=84802
+// Download audio only
+const res = await fetch(
+  "http://localhost:3001/youtube/download/dQw4w9WgXcQ?filter=audioonly"
+);
 ```
 
-<break>
+#### Response
+Binary video/audio file download
 
-#### Request sample
+### 📺 Stream Video
 
+Stream a YouTube video without downloading.
+
+#### Endpoint
+```
+GET /youtube/stream/{videoId}?quality={quality}&filter={filter}
+GET /youtube/stream?url={url}&quality={quality}&filter={filter}
+```
+
+#### Parameters
+
+Same as download endpoint.
+
+#### Example Request
+```javascript
+// Stream video
+const videoUrl = "http://localhost:3001/youtube/stream/dQw4w9WgXcQ";
+
+// Use in HTML video player
+<video src={videoUrl} controls />
+```
+
+#### Response
+Video/audio stream
+
+### 📋 Get Playlist Info
+
+Get information about a YouTube playlist.
+
+#### Endpoint
+```
+GET /youtube/playlist/{playlistId}?limit={limit}
+GET /youtube/playlist?url={url}&limit={limit}
+```
+
+#### Parameters
+
+| Parameter | Type | Description | Required | Default |
+|-----------|------|-------------|----------|---------|
+| `playlistId` | string | YouTube playlist ID (path parameter) | YES (or url) | - |
+| `url` | string | Full YouTube playlist URL (query parameter) | YES (or playlistId) | - |
+| `limit` | number | Maximum videos to return | NO | 100 |
+
+#### Example Request
 ```javascript
 const res = await fetch(
-  "https://api-anime-rouge.vercel.app/aniwatch/servers?id=" + encodeURIComponent("one-piece-100?ep=84802")
+  "http://localhost:3001/youtube/playlist/PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf"
 );
 const data = await res.json();
 console.log(data);
 ```
 
 #### Response Schema
-
 ```typescript
-{
-  "episodeId": string,
-  "episodeNo": number,
-  "sub": [
-    {
-      "serverName": string,
-      "serverId": number
-    },
-    {...},
-  ],
-  "dub": [
-    {
-      "serverName": string,
-      "serverId": number
-    },
-    {...},
-  ],
-}
-```
-
-
-### `GET` Anime Episode Streaming Source Links
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/aniwatch/episode-srcs?id={episodeId}&server={server}&category={category}
-```
-
-#### Query Parameters
-
-| Parameter  |  Type  |                  Description                  | Required? |     Default      |
-| :--------: | :----: | :-------------------------------------------: | :-------: | :--------------: |
-|    `id`    | string |                  episode Id                   |    Yes    |        --        |
-|  `server`  | string |                  server name.                 |    No     | `"vidstreaming"` |
-| `category` | string | The category of the episode ('sub' or 'dub'). |    No     |     `"sub"`      |
-
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/aniwatch/episode-srcs?id=" + encodeURIComponent("solo-leveling-18718?ep=120094") + "&server=vidstreaming&category=sub"
-);
-const data = await res.json();
-console.log(data);
-```
-> [!CAUTION]
-> decryption key changes frequently ..., it sometime may not work
-
-<break>
-
-#### Response Schema
-
-```typescript
-{
-  headers: {
-    Referer: string,
-    "User-Agent": string,
-    ...
-  },
-  sources: [
-    {
-      url: string,
-      isM3U8: boolean,
-      quality?: string,
-    },
-    {...}
-  ],
-  subtitles: [
-    {
-      lang: "English",
-      url: string,
-    },
-    {...}
-  ],
-  anilistID: number | null,
-  malID: number | null,
-}
-```
-
-<break>
-
-### `GET` Anime Episode Streaming Source Links with Multi-Server Fallback
-
-This endpoint automatically tries multiple servers in priority order until it finds one that works. This is recommended over the single-server endpoint for better reliability.
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/aniwatch/episode-srcs-fallback?id={episodeId}&category={category}
-```
-
-#### Query Parameters
-
-| Parameter  |  Type  |                  Description                  | Required? |     Default      |
-| :--------: | :----: | :-------------------------------------------: | :-------: | :--------------: |
-|    `id`    | string |                  episode Id                   |    Yes    |        --        |
-| `category` | string | The category of the episode ('sub' or 'dub'). |    No     |     `"sub"`      |
-
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/aniwatch/episode-srcs-fallback?id=" + encodeURIComponent("solo-leveling-18718?ep=120094") + "&category=sub"
-);
-const data = await res.json();
-console.log(data);
-```
-
-> [!TIP]
-> This endpoint tries servers in this priority order: HD1 → HD2 → VidStreaming → MegaCloud → StreamSB → StreamTape. It returns the first working server's sources.
-
-#### Response Schema
-
-```typescript
-{
-  headers: {
-    Referer: string,
-    "User-Agent": string,
-    ...
-  },
-  sources: [
-    {
-      url: string,
-      isM3U8: boolean,
-      quality?: string,
-    },
-    {...}
-  ],
-  subtitles: [
-    {
-      lang: "English",
-      url: string,
-    },
-    {...}
-  ],
-  anilistID: number | null,
-  malID: number | null,
-  serverUsed: string, // The server that successfully provided the sources
-  triedServers: string[], // List of servers that were tried but failed
-}
-```
-
-<break>
-
-##  <span id="gogoanime">GoGoAnime</span>
-
-### `GET` GoGoAnime Recent Releases
-
-
-### `GET` GoGoAnime Home
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/gogoanime/home
-```
-
-#### Request sample
-
-```javascript
-const res = await fetch("https://api-anime-rouge.vercel.app/gogoanime/home");
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-[
-  "genres": string[],
-  "recentReleases": [
-      {
-          "id": string,
-          "name": string,
-          "img": string,
-          "episodeId": string,
-          "episodeNo": number,
-          "subOrDub": "SUB" | "DUB",
-          "episodeUrl": string,
-      },
-      {...},
-  ],
-  "recentlyAddedSeries": [
-      {
-          "id": string,
-          "name": string,
-          "img": string,
-      },
-      {...},
-  ],
-  "onGoingSeries": [
-      {
-          "id": string,
-          "name": string,
-          "img": string,
-      },
-      {...},
-  ],
-]
-```
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/gogoanime/recent-releases?page=${page}
-```
-<break>
-
-#### Query Parameters
-
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|  `page`   | number |        Page No. of Search Page       |    YES    |    1    |
-
-<break>
-
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/gogoanime/recent-releases"
-);
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-[
-  {
-      "id": string,
-      "name": string,
-      "img": string,
-      "episodeId": string,
-      "episodeNo": number,
-      "episodeUrl": string,
-      "subOrDub": string   // "SUB" | "DUB"
-  },
-  {...},
-]
-```
-
-<break>
-
-### `GET` GoGoAnime New Seasons
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/gogoanime/new-seasons?page=${page}
-```
-
-<break>
-
-#### Query Parameters
-
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|  `page`   | number |        Page No. of Search Page       |    YES    |    1    |
-
-<break>
-
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/gogoanime/new-seasons"
-);
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-[
-  {
-      "id": string,
-      "name": string,
-      "img": string,
-      "releasedYear": string,
-      "animeUrl": string
-  },
-  {...},
-]
-```
-
-<break>
-
-### `GET` GoGoAnime Popular
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/gogoanime/popular?page=${page}
-```
-
-<break>
-
-#### Query Parameters
-
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|  `page`   | number |        Page No. of Search Page       |    YES    |    1    |
-
-<break>
-
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/gogoanime/popular"
-);
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-[
-  {
-      "id": string,
-      "name": string,
-      "img": string,
-      "releasedYear": string,
-      "animeUrl": string
-  },
-  {...},
-]
-```
-
-<break>
-
-
-
-### `GET` GoGoAnime Anime Movies
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/gogoanime/anime-movies?page=${page}
-```
-
-<break>
-
-#### Query Parameters
-
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|  `page`   | number |        Page No. of Search Page       |    YES    |    1    |
-
-<break>
-
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/gogoanime/anime-movies"
-);
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-[
-  {
-      "id": string,
-      "name": string,
-      "img": string,
-      "releasedYear": string,
-      "animeUrl": string
-  },
-  {...},
-]
-```
-
-<break>
-
-### `GET` GoGoAnime Top Airing
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/gogoanime/top-airing?page=${page}
-```
-
-<break>
-
-#### Query Parameters
-
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|  `page`   | number |        Page No. of Search Page       |    YES    |    1    |
-
-<break>
-
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/gogoanime/top-airing"
-);
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-[
-  {
-      "id": string,
-      "name": string,
-      "img": string,
-      "latestEp": string,
-      "animeUrl": string,
-      "genres": string[]
-  },
-  {...},
-]
-```
-
-### `GET` GoGoAnime Completed Animes
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/gogoanime/completed?page=${page}
-```
-
-<break>
-
-#### Query Parameters
-
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|  `page`   | number |        Page No. of Search Page       |    YES    |    1    |
-
-<break>
-
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/gogoanime/completed"
-);
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-[
-  {
-      "id": string,
-      "name": string,
-      "img": string,
-      "latestEp": string,
-      "animeUrl": string
-  },
-  {...},
-]
-```
-
-### `GET` Search Anime
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/gogoanime/search?keyword=$(query)&page=$(page)
-```
-
-#### Query Parameters
-
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|  `query`  | string |         Search Query for Anime       |    YES    |  -----  |
-|  `page`   | number |        Page No. of Search Page       |    YES    |    1    |
-> [!NOTE]
-> <div>Search Query should be In <kbd><b>Kebab Case</b></kbd></div>
-> <div>Page No should be a <kbd><b>Number</b></kbd></b></div>
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/gogoanime/search?keyword=one+piece&page=1"
-);
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-```typescript
-{
-  "animes": [
-        {
-            "id": string,
-            "name": string,
-            "img": string,
-            "releasedYear": string
-        },
-        {...},
-  ],
-  "mostPopularAnimes": [
-        {
-            "id": string,
-            "name": string,
-            "category": string,
-            "img": string,
-            "episodes": {
-                "eps": number,
-                "sub": number,
-                "dub": number
-            }
-        },
-        {...},
-  ],
-  "currentPage": number,
-  "hasNextPage": boolean,
-  "totalPages": number
-}
-```
-
-
-### `GET` Anime About Info
-
-#### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/gogoanime/anime/:id
-```
-
-#### Query Parameters
-
-| Parameter |  Type  |             Description              | Required? | Default |
-| :-------: | :----: | :----------------------------------: | :-------: | :-----: |
-|   `id`    | string |          The unique Anime ID         |    YES    |  -----  |
-
-> [!NOTE]
-> Anime ID should be In <kbd><b>Kebab Case</b></kbd>
-
-#### Request sample
-
-```javascript
-const res = await fetch(
-  "https://api-anime-rouge.vercel.app/gogoanime/anime/one-piece"
-);
-const data = await res.json();
-console.log(data);
-```
-
-#### Response Schema
-
-``` typescript
 {
   "id": string,
-  "anime_id": string,
-  "info": {
-    "name": string,
-    "img": string,
-    "type": string,
-    "genre": string[],
-    "status": string,
-    "aired_in": number,
-    "other_name": string,
-    "episodes": number
-  }
+  "title": string,
+  "thumbnail": string,
+  "channelName": string,
+  "channelId": string,
+  "videoCount": number,
+  "videos": [
+    {
+      "id": string,
+      "title": string,
+      "thumbnail": string,
+      "duration": string
+    }
+  ]
 }
 ```
 
-<break>
-#############################################################################
+## IMDb Endpoints
 
-## <span id="imdb">IMDb</span>
+### 🔍 Search IMDb
 
-### `GET` IMDb Title IDs
+Search for movies and shows on IMDb.
 
 #### Endpoint
-
-```sh
-https://api-anime-rouge.vercel.app/imdb/search?query={query}&type={type}&limit={limit}
+```
+GET /imdb/search?query={query}&type={type}&limit={limit}
 ```
 
 #### Query Parameters
 
-| Parameter | Type | Description | Required? | Default |
-| :-------: | :--: | :---------: | :-------: | :-----: |
-| `query` | string | Search query for the title | YES | ----- |
-| `type` | string | Filter by `movie` or `show` results | NO | `all` |
-| `limit` | number | Maximum results (1-50) | NO | `20` |
+| Parameter | Type | Description | Required | Default |
+|-----------|------|-------------|----------|---------|
+| `query` | string | Search query | YES | - |
+| `type` | string | Filter by `movie` or `show` | NO | all |
+| `limit` | number | Maximum results (1-50) | NO | 20 |
 
-#### Request sample
-
+#### Example Request
 ```javascript
 const res = await fetch(
-  "https://api-anime-rouge.vercel.app/imdb/search?query=one+piece&type=show&limit=5"
+  "http://localhost:3001/imdb/search?query=inception&type=movie&limit=5"
 );
 const data = await res.json();
 console.log(data);
 ```
 
-#### Response Schema
+## 🐳 Docker Deployment
 
-```typescript
-{
-  "ids": string[]
-}
+```bash
+# Build the Docker image
+docker build -t youtube-api .
+
+# Run the container
+docker run -p 3001:3001 youtube-api
 ```
 
-<break>
-#############################################################################
+## 📝 Vercel Deployment
 
-## <span>🖱️ For Front End</span>
+Click the button below to deploy to Vercel:
 
-> [!TIP]
-> Kindly use this repo to make Front End
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/CloudCompile/aninescraoer)
 
-  - [Eltik / Anify](https://github.com/Eltik/Anify)
+## ⚙️ Configuration
 
-#############################################################################
+The API uses local caching to improve performance:
 
-## <span>🤝 Thanks ❤️</span>
+| Route | Caching Duration |
+|-------|------------------|
+| `/youtube/search` | 1 hour |
+| `/youtube/info/*` | 1 day |
+| `/youtube/playlist/*` | 1 day |
+| `/imdb/search` | 1 hour |
 
-- [consumet.ts](https://github.com/consumet/consumet.ts)
-- [ghoshRitesh12](https://github.com/ghoshRitesh12)
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+ISC License
+
+## 🙏 Acknowledgments
+
+- [@distube/ytdl-core](https://github.com/distubeDev/ytdl-core) - YouTube download library
+- [ytsr](https://github.com/TimeForANinja/node-ytsr) - YouTube search library
+- [ytpl](https://github.com/TimeForANinja/node-ytpl) - YouTube playlist library
+- [Express](https://expressjs.com/) - Web framework
+- [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
+
+## ⚠️ Disclaimer
+
+This API is for educational purposes only. Please respect YouTube's Terms of Service and copyright laws. Use responsibly.

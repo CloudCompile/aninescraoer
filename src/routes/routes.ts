@@ -1,5 +1,4 @@
-import aniwatch_router from "./aniwatch/routes";
-import gogoanime_router from "./gogoanime/routes";
+import youtube_router from "./youtube/routes";
 import imdb_router from "./imdb/routes";
 import { getRoot } from "../lib/getRoot";
 import { Router, type IRouter } from "express";
@@ -14,16 +13,10 @@ router.get("/health", (_req, res) => {
   res.sendStatus(200);
 });
 
-// imdb search
+// YouTube API routes
+router.use("/youtube", youtube_router);
+
+// imdb search (can be useful for YouTube video metadata)
 router.use("/imdb", imdb_router);
-
-// aniwatch, hianime, zoro
-router.use("/aniwatch", aniwatch_router);
-router.use("/hianime", aniwatch_router);
-router.use("/zoro", aniwatch_router);
-
-// gogoanime, anitaku
-router.use("/gogoanime", gogoanime_router);
-router.use("/anitaku", gogoanime_router);
 
 export { router };

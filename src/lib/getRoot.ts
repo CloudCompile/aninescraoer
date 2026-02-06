@@ -1,27 +1,30 @@
-import type { GetRoot } from "../types/aniwatch/root";
 import type { RequestHandler } from "express";
-import { isSiteReachable } from "./isSiteReachable";
 
-// TODO: make config json files , make it better in future
 export const getRoot: RequestHandler = async (_req, res) => {
   try {
-    const data: GetRoot = {
-      docs: "",
-      sites: {},
+    const data = {
+      name: "YouTube API & Downloader",
+      version: "2.0.0",
+      description: "A YouTube API for searching, downloading, and streaming videos",
+      docs: "https://github.com/CloudCompile/aninescraoer/blob/main/README.md",
+      endpoints: {
+        youtube: {
+          search: "/youtube/search?query={query}&limit={limit}&type={type}",
+          videoInfo: "/youtube/info/{videoId} or /youtube/info?url={url}",
+          download: "/youtube/download/{videoId}?quality={quality}&filter={filter}",
+          stream: "/youtube/stream/{videoId}?quality={quality}&filter={filter}",
+          playlist: "/youtube/playlist/{playlistId}?limit={limit}",
+        },
+        imdb: {
+          search: "/imdb/search?query={query}&type={type}&limit={limit}",
+        },
+      },
+      status: "online",
     };
-
-    data.docs = "https://github.com/falcon71181/Anime-API/blob/main/README.md";
-
-    const aniwatchStatus = await isSiteReachable("https://aniwatch.to");
-    const aniwatchtvStatus = await isSiteReachable("https://aniwatchtv.to");
-
-    const gogoanimeStatus = await isSiteReachable("https://gogoanime3.co");
-
-    data.sites["aniwatch"] = aniwatchStatus || aniwatchtvStatus;
-    data.sites["gogoanime"] = gogoanimeStatus;
 
     res.status(200).json(data);
   } catch (error) {
     console.log(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
