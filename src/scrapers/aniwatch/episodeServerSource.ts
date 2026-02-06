@@ -161,7 +161,7 @@ export const scrapeAnimeEpisodeSources = async (
           serverId = extract_server_id($, 6, category);
           console.log("SERVER_ID: ", serverId);
 
-          if (!serverId) throw new Error("HD-3 not found");
+          if (!serverId) throw new Error("hd-3 not found");
           break;
         case Servers.StreamSB:
           serverId = extract_server_id($, 5, category);
