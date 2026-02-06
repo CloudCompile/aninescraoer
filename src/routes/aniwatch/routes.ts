@@ -10,6 +10,10 @@ import {
   getAnimeEpisodeSourcesWithFallback,
   getatozPage,
 } from "../../controllers/aniwatch/controllers";
+import {
+  getVidSrcSources,
+  getAvailableAnime,
+} from "../../controllers/aniwatch/vidsrcController";
 import { cacheManager } from "../../middlewares/cache";
 
 const aniwatch_router: IRouter = Router();
@@ -81,6 +85,27 @@ aniwatch_router.get(
     keyParams: ["id", "category"],
   }),
   getAnimeEpisodeSourcesWithFallback,
+);
+
+// /aniwatch/vidsrc?episodeId=${episodeId}
+// Get VidSrc embed URL using IMDb/TMDb mapping
+aniwatch_router.get(
+  "/vidsrc",
+  cacheManager.middleware({
+    duration: 3600, // 1 hour cache
+    keyParams: ["episodeId", "imdbId", "tmdbId", "season", "episode"],
+  }),
+  getVidSrcSources,
+);
+
+// /aniwatch/vidsrc/anime
+// Get list of anime available in VidSrc mapping database
+aniwatch_router.get(
+  "/vidsrc/anime",
+  cacheManager.middleware({
+    duration: 3600 * 24, // 1 day cache
+  }),
+  getAvailableAnime,
 );
 
 //  aniwatch/:category?page=${page}

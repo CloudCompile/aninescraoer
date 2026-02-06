@@ -41,9 +41,30 @@ export const scrapeAnimeEpisodeSources = async (
       case Servers.VidStreaming:
       case Servers.VidCloud:
       case Servers.VidSrc:
-        return {
-          ...(await new MegaCloud().extract2(serverUrl)),
-        };
+      case Servers.HD1:
+      case Servers.HD2:
+      case Servers.HD3:
+        try {
+          const megacloudResult = await new MegaCloud().extract2(serverUrl);
+          // Check if we got valid sources
+          if (megacloudResult && megacloudResult.sources && megacloudResult.sources.length > 0) {
+            return { ...megacloudResult };
+          }
+          // If no sources, fall back to RapidCloud
+          console.log(`MegaCloud returned no sources for ${server}, falling back to RapidCloud`);
+          return {
+            headers: { Referer: serverUrl.href },
+            ...(await new RapidCloud().extract(serverUrl)),
+          };
+        } catch (megacloudError) {
+          // MegaCloud extraction failed, fall back to RapidCloud
+          console.log(`MegaCloud extraction failed for ${server}:`, megacloudError);
+          console.log(`Falling back to RapidCloud extractor`);
+          return {
+            headers: { Referer: serverUrl.href },
+            ...(await new RapidCloud().extract(serverUrl)),
+          };
+        }
       case Servers.StreamSB:
         return {
           headers: {
@@ -112,6 +133,7 @@ export const scrapeAnimeEpisodeSources = async (
      * rapidcloud, vidcloud, megacloud  -> 1
      * streamsb -> 5
      * streamtape -> 3
+     * hd-3 -> 6
      */
     let serverId: string | null = null;
     try {
@@ -134,6 +156,12 @@ export const scrapeAnimeEpisodeSources = async (
 
           // zoro's vidcloud server is rapidcloud
           if (!serverId) throw new Error("vidtreaming not found");
+          break;
+        case Servers.HD3:
+          serverId = extract_server_id($, 6, category);
+          console.log("SERVER_ID: ", serverId);
+
+          if (!serverId) throw new Error("hd-3 not found");
           break;
         case Servers.StreamSB:
           serverId = extract_server_id($, 5, category);
