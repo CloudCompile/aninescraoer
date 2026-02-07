@@ -3,196 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube API & Downloader - Documentation</title>
+    <title>YouTube Downloader - Download Videos & Audio</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📺</text></svg>">
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            padding: 40px;
-        }
-        h1 {
-            color: #667eea;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            color: #666;
-            font-size: 1.2em;
-            margin-bottom: 30px;
-        }
-        .endpoint {
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 5px;
-        }
-        .endpoint h3 {
-            margin-top: 0;
-            color: #667eea;
-        }
-        .endpoint code {
-            background: #e9ecef;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-        }
-        .endpoint pre {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-        }
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
-        }
-        .feature {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .feature-icon {
-            font-size: 3em;
-            margin-bottom: 10px;
-        }
-        .btn {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 12px 30px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 10px 5px;
-            transition: background 0.3s;
-        }
-        .btn:hover {
-            background: #5568d3;
-        }
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #dee2e6;
-            color: #6c757d;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
-        <h1>📺 YouTube API & Downloader</h1>
-        <p class="subtitle">A powerful YouTube API for searching, downloading, and streaming videos</p>
-
-        <div class="feature-grid">
-            <div class="feature">
-                <div class="feature-icon">🔍</div>
-                <h3>Search</h3>
-                <p>Search for videos, channels, and playlists</p>
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">📺</span>
+                <span class="logo-text">YouTube Downloader</span>
             </div>
-            <div class="feature">
-                <div class="feature-icon">📊</div>
-                <h3>Video Info</h3>
-                <p>Get detailed information about any video</p>
+            <p class="tagline">Download YouTube videos and audio in various formats</p>
+        </header>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="Search YouTube videos or paste video URL..."
+                    autocomplete="off"
+                >
+                <button id="searchBtn" class="search-btn">
+                    <span class="search-icon">🔍</span>
+                    Search
+                </button>
             </div>
-            <div class="feature">
-                <div class="feature-icon">⬇️</div>
-                <h3>Download</h3>
-                <p>Download videos in various qualities</p>
+            <p class="search-hint">Enter a search term or paste a YouTube video URL</p>
+        </section>
+
+        <!-- Tabs for Search Results / Video Info -->
+        <div class="tabs" id="tabs" style="display: none;">
+            <button class="tab-btn active" data-tab="search">Search Results</button>
+            <button class="tab-btn" data-tab="video">Video Info</button>
+        </div>
+
+        <!-- Search Results Section -->
+        <section id="searchResults" class="search-results hidden">
+            <div id="resultsGrid" class="results-grid">
+                <!-- Search results will be inserted here -->
             </div>
-            <div class="feature">
-                <div class="feature-icon">📺</div>
-                <h3>Stream</h3>
-                <p>Stream videos directly through the API</p>
+        </section>
+
+        <!-- Video Info Section -->
+        <section id="videoInfo" class="video-info hidden">
+            <div class="video-details">
+                <!-- Video thumbnail -->
+                <div class="video-thumbnail-container">
+                    <img id="videoThumbnail" src="" alt="Video thumbnail" class="video-thumbnail">
+                    <div class="video-duration" id="videoDuration"></div>
+                </div>
+
+                <!-- Video metadata -->
+                <div class="video-metadata">
+                    <h2 id="videoTitle" class="video-title"></h2>
+                    <div class="video-channel">
+                        <span id="channelName" class="channel-name"></span>
+                    </div>
+                    <div class="video-stats">
+                        <span id="videoViews" class="stat-item"></span>
+                        <span id="videoLikes" class="stat-item"></span>
+                        <span id="videoDate" class="stat-item"></span>
+                    </div>
+                </div>
             </div>
-            <div class="feature">
-                <div class="feature-icon">📋</div>
-                <h3>Playlists</h3>
-                <p>Get playlist information and videos</p>
+
+            <!-- Download Options -->
+            <div class="download-section">
+                <h3 class="section-title">Download Options</h3>
+                
+                <!-- Quality Selector -->
+                <div class="format-selector">
+                    <label class="format-label">Select Quality:</label>
+                    <select id="qualitySelect" class="quality-select">
+                        <option value="highest">Highest Quality (Video + Audio)</option>
+                        <option value="720p">720p (HD)</option>
+                        <option value="480p">480p (SD)</option>
+                        <option value="360p">360p</option>
+                        <option value="highestaudio">Audio Only (Best Quality)</option>
+                        <option value="lowestaudio">Audio Only (Low Quality)</option>
+                    </select>
+                </div>
+
+                <!-- Download Buttons -->
+                <div class="download-buttons">
+                    <button id="downloadBtn" class="btn btn-primary">
+                        <span class="btn-icon">⬇️</span>
+                        Download Now
+                    </button>
+                    <button id="streamBtn" class="btn btn-secondary">
+                        <span class="btn-icon">▶️</span>
+                        Stream/Preview
+                    </button>
+                    <button id="copyLinkBtn" class="btn btn-tertiary">
+                        <span class="btn-icon">🔗</span>
+                        Copy Download Link
+                    </button>
+                </div>
+
+                <!-- Download Info -->
+                <div id="downloadInfo" class="download-info hidden">
+                    <p class="info-text"></p>
+                </div>
             </div>
-            <div class="feature">
-                <div class="feature-icon">🎬</div>
-                <h3>IMDb</h3>
-                <p>Search IMDb for additional metadata</p>
+
+            <!-- Video Description -->
+            <div class="video-description-section">
+                <h3 class="section-title">Description</h3>
+                <div id="videoDescription" class="video-description"></div>
             </div>
+        </section>
+
+        <!-- Playlist Section (for future enhancement) -->
+        <section id="playlistInfo" class="playlist-info hidden">
+            <h3 class="section-title">Playlist Videos</h3>
+            <div id="playlistVideos" class="playlist-videos">
+                <!-- Playlist videos will be inserted here -->
+            </div>
+        </section>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Loading...</p>
         </div>
 
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="https://github.com/CloudCompile/aninescraoer" class="btn">View on GitHub</a>
-            <a href="https://github.com/CloudCompile/aninescraoer/blob/main/README.md" class="btn">Full Documentation</a>
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message hidden">
+            <span class="error-icon">⚠️</span>
+            <p id="errorText"></p>
         </div>
 
-        <div class="endpoint">
-            <h3>🔍 Search Videos</h3>
-            <p>Search for YouTube videos, channels, or playlists</p>
-            <code>GET /youtube/search?query={query}&limit={limit}&type={type}</code>
-            <pre>// Example
-fetch('/youtube/search?query=javascript+tutorial&limit=10&type=video')
-  .then(res => res.json())
-  .then(data => console.log(data));</pre>
-        </div>
-
-        <div class="endpoint">
-            <h3>📊 Get Video Info</h3>
-            <p>Get detailed information about a YouTube video</p>
-            <code>GET /youtube/info/{videoId}</code>
-            <pre>// Example
-fetch('/youtube/info/dQw4w9WgXcQ')
-  .then(res => res.json())
-  .then(data => console.log(data));</pre>
-        </div>
-
-        <div class="endpoint">
-            <h3>⬇️ Download Video</h3>
-            <p>Download a YouTube video</p>
-            <code>GET /youtube/download/{videoId}?quality={quality}&filter={filter}</code>
-            <pre>// Example - Download highest quality
-window.location.href = '/youtube/download/dQw4w9WgXcQ?quality=highest';
-
-// Example - Download audio only
-window.location.href = '/youtube/download/dQw4w9WgXcQ?filter=audioonly';</pre>
-        </div>
-
-        <div class="endpoint">
-            <h3>📺 Stream Video</h3>
-            <p>Stream a YouTube video without downloading</p>
-            <code>GET /youtube/stream/{videoId}?quality={quality}</code>
-            <pre>// Example - Use in HTML video player
-&lt;video controls&gt;
-  &lt;source src="/youtube/stream/dQw4w9WgXcQ" type="video/mp4"&gt;
-&lt;/video&gt;</pre>
-        </div>
-
-        <div class="endpoint">
-            <h3>📋 Get Playlist Info</h3>
-            <p>Get information about a YouTube playlist</p>
-            <code>GET /youtube/playlist/{playlistId}?limit={limit}</code>
-            <pre>// Example
-fetch('/youtube/playlist/PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf?limit=10')
-  .then(res => res.json())
-  .then(data => console.log(data));</pre>
-        </div>
-
-        <footer>
-            <p><strong>⚠️ Disclaimer:</strong> This API is for educational purposes only. Please respect YouTube's Terms of Service and copyright laws.</p>
-            <p>Built with ❤️ using TypeScript, Express, and Node.js</p>
+        <!-- Footer -->
+        <footer class="footer">
+            <p>
+                <strong>⚠️ Disclaimer:</strong> This tool is for educational purposes only. 
+                Please respect YouTube's Terms of Service and copyright laws.
+            </p>
+            <p class="footer-links">
+                <a href="https://github.com/CloudCompile/aninescraoer" target="_blank">GitHub</a> • 
+                <a href="https://github.com/CloudCompile/aninescraoer/blob/main/README.md" target="_blank">API Docs</a>
+            </p>
         </footer>
     </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
