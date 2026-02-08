@@ -3,6 +3,14 @@ import YTDlpWrap from "yt-dlp-wrap";
 import path from "path";
 import fs from "fs";
 
+// Find the node binary path for yt-dlp JS runtime
+function findNodePath(): string {
+  // Use process.execPath for cross-platform compatibility
+  return process.execPath;
+}
+
+const nodePath = findNodePath();
+
 // Initialize yt-dlp wrapper
 let ytDlpWrap: YTDlpWrap | null = null;
 let ytDlpInitialized = false;
@@ -46,6 +54,52 @@ async function initializeYtDlp() {
   return ytDlpWrap;
 }
 
+// Common yt-dlp flags for all commands
+function getCommonArgs(): string[] {
+  return [
+    "--js-runtimes", `node:${nodePath}`,
+    "--no-warnings",
+  ];
+}
+
+// Map quality parameter to yt-dlp format selector
+function getFormatSelector(quality?: string, filter?: string): string {
+  if (filter === "audioonly") {
+    return "bestaudio[ext=m4a]/bestaudio";
+  }
+  if (filter === "videoonly") {
+    return "bestvideo";
+  }
+
+  switch (quality) {
+    case "highestaudio":
+    case "lowestaudio":
+      return quality === "lowestaudio" ? "worstaudio" : "bestaudio[ext=m4a]/bestaudio";
+    case "360p":
+      return "bestvideo[height<=360]+bestaudio/best[height<=360]/b";
+    case "480p":
+      return "bestvideo[height<=480]+bestaudio/best[height<=480]/b";
+    case "720p":
+      return "bestvideo[height<=720]+bestaudio/best[height<=720]/b";
+    case "1080p":
+      return "bestvideo[height<=1080]+bestaudio/best[height<=1080]/b";
+    case "highest":
+    default:
+      // Use "b" (shorthand for "best" without the deprecation warning) or merge best
+      return "bestvideo+bestaudio/b";
+  }
+}
+
+// Fetch raw yt-dlp metadata (throws on error, does not send response)
+export async function fetchYtDlpMetadata(videoUrl: string): Promise<any> {
+  const ytDlp = await initializeYtDlp();
+  if (!ytDlp) {
+    throw new Error("Failed to initialize yt-dlp");
+  }
+  // Include -f b to avoid yt-dlp-wrap defaulting to -f best (deprecated)
+  return ytDlp.getVideoInfo([videoUrl, ...getCommonArgs(), "-f", "b"]);
+}
+
 export async function getVideoInfoYtDlp(req: Request, res: Response) {
   try {
     const { videoId } = req.params;
@@ -68,8 +122,9 @@ export async function getVideoInfoYtDlp(req: Request, res: Response) {
       throw new Error("Failed to initialize yt-dlp");
     }
 
-    // Get video metadata using yt-dlp
-    const metadata = await ytDlp.getVideoInfo(videoUrl);
+    // Get video metadata using yt-dlp with JS runtime
+    // Include -f b to avoid yt-dlp-wrap defaulting to -f best (deprecated)
+    const metadata = await ytDlp.getVideoInfo([videoUrl, ...getCommonArgs(), "-f", "b"]);
 
     // Transform yt-dlp metadata to match our API format
     const videoInfo = {
@@ -110,9 +165,16 @@ export async function getVideoInfoYtDlp(req: Request, res: Response) {
     res.json(videoInfo);
   } catch (error) {
     console.error("yt-dlp error fetching video info:", error);
-    res.status(500).json({
-      error: "Failed to fetch video information using yt-dlp",
-      message: error instanceof Error ? error.message : "Unknown error",
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const isBotDetected = errMsg.includes("not a bot") || errMsg.includes("Sign in to confirm");
+    res.status(isBotDetected ? 429 : 500).json({
+      error: isBotDetected
+        ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
+        : "Failed to fetch video information using yt-dlp",
+      message: errMsg,
+      suggestion: isBotDetected
+        ? "Export cookies from your browser using a browser extension and set them as the YOUTUBE_COOKIE environment variable."
+        : undefined,
     });
   }
 }
@@ -140,28 +202,30 @@ export async function downloadVideoYtDlp(req: Request, res: Response) {
     }
 
     // Get video info first to set filename
-    const metadata = await ytDlp.getVideoInfo(videoUrl);
+    const metadata = await ytDlp.getVideoInfo([videoUrl, ...getCommonArgs(), "-f", "b"]);
     const title = (metadata.title || "video").replace(/[^\w\s-]/g, "");
 
-    // Set headers for download
-    res.setHeader("Content-Disposition", `attachment; filename="${title}.mp4"`);
-    res.setHeader("Content-Type", "video/mp4");
+    const qualityStr = typeof quality === "string" ? quality : undefined;
+    const filterStr = typeof filter === "string" ? filter : undefined;
+    const formatSelector = getFormatSelector(qualityStr, filterStr);
+    const isAudio = filterStr === "audioonly" || qualityStr === "highestaudio" || qualityStr === "lowestaudio";
 
-    // Build yt-dlp arguments based on quality/filter
-    const args: string[] = [videoUrl];
-    
-    if (filter === "audioonly") {
-      args.push("-f", "bestaudio");
+    // Set headers for download
+    if (isAudio) {
       res.setHeader("Content-Type", "audio/mp4");
       res.setHeader("Content-Disposition", `attachment; filename="${title}.m4a"`);
-    } else if (filter === "videoonly") {
-      args.push("-f", "bestvideo");
     } else {
-      // Default: best video+audio
-      args.push("-f", "best");
+      res.setHeader("Content-Disposition", `attachment; filename="${title}.mp4"`);
+      res.setHeader("Content-Type", "video/mp4");
     }
+
+    // Build yt-dlp arguments
+    const args: string[] = [videoUrl, ...getCommonArgs(), "-f", formatSelector, "-o", "-"];
     
-    args.push("-o", "-"); // Output to stdout
+    // For merged formats, use --merge-output-format mp4
+    if (!isAudio && formatSelector.includes("+")) {
+      args.push("--merge-output-format", "mp4");
+    }
 
     // Stream the download directly to response
     const readableStream = ytDlp.execStream(args);
@@ -179,9 +243,13 @@ export async function downloadVideoYtDlp(req: Request, res: Response) {
   } catch (error) {
     console.error("Error in yt-dlp download:", error);
     if (!res.headersSent) {
-      res.status(500).json({
-        error: "Failed to download video",
-        message: error instanceof Error ? error.message : "Unknown error",
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const isBotDetected = errMsg.includes("not a bot") || errMsg.includes("Sign in to confirm");
+      res.status(isBotDetected ? 429 : 500).json({
+        error: isBotDetected
+          ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
+          : "Failed to download video",
+        message: errMsg,
       });
     }
   }
@@ -210,22 +278,21 @@ export async function streamVideoYtDlp(req: Request, res: Response) {
       throw new Error("Failed to initialize yt-dlp");
     }
 
+    const qualityStr = typeof quality === "string" ? quality : undefined;
+    const filterStr = typeof filter === "string" ? filter : undefined;
+    const formatSelector = getFormatSelector(qualityStr, filterStr);
+    const isAudio = filterStr === "audioonly" || qualityStr === "highestaudio" || qualityStr === "lowestaudio";
+
     // Set headers for streaming
-    res.setHeader("Content-Type", "video/mp4");
+    res.setHeader("Content-Type", isAudio ? "audio/mp4" : "video/mp4");
 
     // Build yt-dlp arguments
-    const args: string[] = [videoUrl];
+    const args: string[] = [videoUrl, ...getCommonArgs(), "-f", formatSelector, "-o", "-"];
     
-    if (filter === "audioonly") {
-      args.push("-f", "bestaudio");
-      res.setHeader("Content-Type", "audio/mp4");
-    } else if (filter === "videoonly") {
-      args.push("-f", "bestvideo");
-    } else {
-      args.push("-f", "best");
+    // For merged formats, use --merge-output-format mp4
+    if (!isAudio && formatSelector.includes("+")) {
+      args.push("--merge-output-format", "mp4");
     }
-    
-    args.push("-o", "-"); // Output to stdout
 
     // Stream directly to response
     const readableStream = ytDlp.execStream(args);
@@ -243,9 +310,13 @@ export async function streamVideoYtDlp(req: Request, res: Response) {
   } catch (error) {
     console.error("Error in yt-dlp stream:", error);
     if (!res.headersSent) {
-      res.status(500).json({
-        error: "Failed to stream video",
-        message: error instanceof Error ? error.message : "Unknown error",
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const isBotDetected = errMsg.includes("not a bot") || errMsg.includes("Sign in to confirm");
+      res.status(isBotDetected ? 429 : 500).json({
+        error: isBotDetected
+          ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
+          : "Failed to stream video",
+        message: errMsg,
       });
     }
   }

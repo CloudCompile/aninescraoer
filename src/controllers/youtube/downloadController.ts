@@ -81,9 +81,13 @@ export async function downloadVideo(req: Request, res: Response) {
   } catch (error) {
     console.error("Error downloading video:", error);
     if (!res.headersSent) {
-      res.status(500).json({
-        error: "Failed to download video",
-        message: error instanceof Error ? error.message : "Unknown error",
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const isBotDetected = errMsg.includes("not a bot") || errMsg.includes("Sign in to confirm");
+      res.status(isBotDetected ? 429 : 500).json({
+        error: isBotDetected
+          ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
+          : "Failed to download video",
+        message: errMsg,
       });
     }
   }
@@ -148,9 +152,13 @@ export async function streamVideo(req: Request, res: Response) {
   } catch (error) {
     console.error("Error streaming video:", error);
     if (!res.headersSent) {
-      res.status(500).json({
-        error: "Failed to stream video",
-        message: error instanceof Error ? error.message : "Unknown error",
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const isBotDetected = errMsg.includes("not a bot") || errMsg.includes("Sign in to confirm");
+      res.status(isBotDetected ? 429 : 500).json({
+        error: isBotDetected
+          ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
+          : "Failed to stream video",
+        message: errMsg,
       });
     }
   }
