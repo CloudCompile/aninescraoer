@@ -2,7 +2,7 @@
 <p align="center">
   <img src="https://skillicons.dev/icons?i=ts,express,nodejs,docker" />
   <br/>
-  <a href="https://api-anime-rouge.vercel.app"><kbd>YouTube API & Downloader</kbd></a>
+  <a href="https://aninescraper.vercel.app"><kbd>YouTube API & Downloader</kbd></a>
 </p>
 <br/><br/>
 
