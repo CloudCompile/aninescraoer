@@ -44,27 +44,59 @@ Create a `.env` file in the root directory:
 ```env
 PORT=3001
 
-# Optional: YouTube PoToken and VisitorData for improved bot protection
-# These help avoid "Sign in to confirm you're not a bot" errors for certain videos
-# Note: These tokens expire periodically and need to be regenerated
-# To obtain these tokens, you can use browser DevTools:
-# 1. Open YouTube in your browser
-# 2. Open DevTools (F12) -> Network tab
-# 3. Play any video and look for requests to "player" endpoint
-# 4. Find the "poToken" and "visitorData" in the request headers or payload
-YOUTUBE_PO_TOKEN=your_po_token_here
-YOUTUBE_VISITOR_DATA=your_visitor_data_here
+# Optional: YouTube cookies for age-restricted/region-locked videos
+# To obtain cookies, log into YouTube in your browser, then:
+# 1. Open DevTools (F12) -> Application/Storage tab -> Cookies
+# 2. Copy all cookies for youtube.com
+# 3. Format as: name1=value1; name2=value2; name3=value3
+YOUTUBE_COOKIE=your_youtube_cookies_here
 ```
 
-### ⚠️ YouTube Bot Detection
+## ⚠️ YouTube Bot Detection & Video Access
 
-Due to YouTube's anti-bot measures, some videos may return errors like "Sign in to confirm you're not a bot". This is a limitation of the underlying YouTube API library when running in Node.js environments.
+This API uses a **hybrid approach** for maximum compatibility:
 
-**Workarounds:**
-- Most popular videos work without additional configuration
-- For better reliability, provide `YOUTUBE_PO_TOKEN` and `YOUTUBE_VISITOR_DATA` environment variables
-- These tokens expire and need periodic renewal (typically every few hours)
-- Some age-restricted or region-locked videos may still fail even with tokens
+1. **Primary**: @distube/ytdl-core (fast, JavaScript-based)
+2. **Fallback**: yt-dlp (Python-based, most robust against bot detection)
+
+The system automatically falls back to yt-dlp when @distube/ytdl-core encounters bot detection.
+
+**Videos that work:**
+- Most public videos without restrictions
+- Example: https://www.youtube.com/watch?v=dQw4w9WgXcQ (Rick Astley - Never Gonna Give You Up)
+- ✅ **Backend**: @distube/ytdl-core (fast response)
+
+**Videos that may need yt-dlp:**
+- Age-restricted videos
+- Region-locked videos  
+- Videos with strict bot detection
+- ✅ **Backend**: yt-dlp (automatic fallback)
+
+**Videos that require cookies:**
+- Private videos
+- YouTube Premium content
+- Some age-restricted content
+- ⚠️ Set YOUTUBE_COOKIE environment variable (see below)
+
+**Force specific backend:**
+```bash
+# Use yt-dlp explicitly
+curl http://localhost:3001/youtube/info/VIDEO_ID?backend=ytdlp
+
+# Default (tries ytdl-core first, falls back to yt-dlp)
+curl http://localhost:3001/youtube/info/VIDEO_ID
+```
+
+### 🔧 Setup
+
+**Automatic Setup:**
+- yt-dlp binary downloads automatically on first use
+- No manual installation required!
+
+**For age-restricted videos:**
+- Set YOUTUBE_COOKIE environment variable
+- Extract cookies from logged-in browser session
+- Format: `cookie1=value1; cookie2=value2`
 
 ## 📚 API Documentation
 

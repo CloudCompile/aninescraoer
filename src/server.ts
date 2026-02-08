@@ -2,6 +2,7 @@ import express from "express";
 import { config } from "dotenv";
 import { limiter } from "./middlewares/rateLimit";
 import { router } from "./routes/routes";
+import path from "path";
 
 config(); // dotenv
 
@@ -34,6 +35,10 @@ app.use((req, res, next) => {
 
 //middlewares
 app.use(limiter);
+
+// Serve static files from docs directory
+app.use(express.static(path.join(__dirname, "../docs")));
+app.use("/docs", express.static(path.join(__dirname, "../docs")));
 
 // router
 app.use("/", router);

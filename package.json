@@ -23,7 +23,7 @@
     "vitest": "^2.0.5"
   },
   "dependencies": {
-    "@ybd-project/ytdl-core": "^6.0.8",
+    "@distube/ytdl-core": "^4.16.12",
     "axios": "^1.6.7",
     "cheerio": "^1.0.0-rc.12",
     "crypto-js": "^4.2.0",
@@ -32,6 +32,7 @@
     "express-rate-limit": "^7.1.5",
     "http-errors": "^2.0.0",
     "node-cache": "^5.1.2",
+    "yt-dlp-wrap": "^2.3.12",
     "ytpl": "^2.3.0",
     "ytsr": "^3.8.4"
   }
