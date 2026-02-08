@@ -2,18 +2,24 @@ import { Request, Response } from "express";
 import { YtdlCore, toPipeableStream } from "@ybd-project/ytdl-core";
 
 // Create ytdl instance with enhanced configuration to avoid bot detection  
+// PoToken and visitorData can be provided via environment variables for better bot protection
 const ytdl = new YtdlCore({
   // Minimal logging - only errors
   logDisplay: ['error'],
   // Disable automatic poToken generation since it doesn't work reliably in Node.js
   disablePoTokenAutoGeneration: true,
-  // Use only the most reliable mobile clients (ios, android)
-  // These are less likely to trigger bot detection than web clients
-  clients: ['ios', 'android'],
-  // Disable default clients to prevent using web/mweb/tv which are more likely to be blocked
+  // Use manual poToken if provided via environment variable
+  poToken: process.env.YOUTUBE_PO_TOKEN || undefined,
+  visitorData: process.env.YOUTUBE_VISITOR_DATA || undefined,
+  // Use multiple client types for better fallback
+  // android and tvEmbedded are most reliable for avoiding bot detection
+  clients: ['android', 'tvEmbedded', 'webEmbedded'],
+  // Disable default clients to have full control
   disableDefaultClients: true,
   // Disable file cache to avoid stale data
   disableFileCache: true,
+  // Parse HLS format for live streams
+  parsesHLSFormat: true,
   // Don't include API responses to reduce payload
   includesPlayerAPIResponse: false,
   includesNextAPIResponse: false
