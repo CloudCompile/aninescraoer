@@ -139,3 +139,5 @@ package-lock.json
 
 # Detached process logs
 /tmp/copilot-detached-*.log
+*.js
+*-player-script.js

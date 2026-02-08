@@ -32,6 +32,7 @@
     "express-rate-limit": "^7.1.5",
     "http-errors": "^2.0.0",
     "node-cache": "^5.1.2",
+    "yt-dlp-wrap": "^2.3.12",
     "ytpl": "^2.3.0",
     "ytsr": "^3.8.4"
   }

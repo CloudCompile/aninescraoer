@@ -2,6 +2,20 @@ import { Request, Response } from "express";
 import ytdl from "@distube/ytdl-core";
 import type { YouTubeVideoInfo, VideoFormat } from "../../types/youtube/youtube";
 
+// Create ytdl agent with cookies if provided for better access to restricted videos
+const agent = process.env.YOUTUBE_COOKIE 
+  ? ytdl.createAgent(
+      process.env.YOUTUBE_COOKIE.split(';').map(cookie => {
+        const [name, ...valueParts] = cookie.trim().split('=');
+        return {
+          name: name.trim(),
+          value: valueParts.join('=').trim(),
+          domain: '.youtube.com'
+        };
+      })
+    )
+  : undefined;
+
 export async function getVideoInfo(req: Request, res: Response) {
   try {
     const { videoId } = req.params;
@@ -19,8 +33,9 @@ export async function getVideoInfo(req: Request, res: Response) {
       });
     }
 
-    // Get video info - using simple approach like the working reference implementation
-    const info = await ytdl.getInfo(videoUrl);
+    // Get video info with agent if cookies are provided
+    const options = agent ? { agent } : {};
+    const info = await ytdl.getInfo(videoUrl, options);
 
     const formats: VideoFormat[] = (info.formats || []).map((format: any) => ({
       quality: format.qualityLabel || format.quality || "unknown",
