@@ -275,7 +275,7 @@ async function loadVideoInfo(videoId) {
     switchTab('video');
 }
 
-function handleDownload() {
+async function handleDownload() {
     if (!currentVideoId) {
         showError('No video selected');
         return;
@@ -284,17 +284,57 @@ function handleDownload() {
     const quality = qualitySelect.value;
     const downloadUrl = `${API_BASE}/youtube/download/${currentVideoId}?quality=${quality}`;
     
-    // Show download info
+    // Disable button and show progress
+    downloadBtn.disabled = true;
+    downloadBtn.innerHTML = '<span class="btn-icon">⏳</span> Downloading...';
     downloadInfo.classList.remove('hidden');
-    downloadInfo.querySelector('.info-text').textContent = '🎉 Download started! Check your browser downloads.';
+    downloadInfo.querySelector('.info-text').textContent = '⏳ Preparing download... This may take a moment.';
 
-    // Trigger download
-    window.location.href = downloadUrl;
+    try {
+        const response = await fetch(downloadUrl);
 
-    // Hide info after 5 seconds
-    setTimeout(() => {
-        downloadInfo.classList.add('hidden');
-    }, 5000);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Download failed (HTTP ${response.status})`);
+        }
+
+        // Get filename from Content-Disposition header if available
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `${currentVideoData?.title || 'video'}.mp4`;
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
+            if (match) {
+                filename = match[1];
+            }
+        }
+
+        // Stream the response into a blob
+        const blob = await response.blob();
+
+        // Create a temporary download link and trigger download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        downloadInfo.querySelector('.info-text').textContent = '🎉 Download complete! Check your browser downloads.';
+    } catch (error) {
+        console.error('Download error:', error);
+        downloadInfo.querySelector('.info-text').textContent = `❌ Download failed: ${error.message}`;
+    } finally {
+        // Re-enable button
+        downloadBtn.disabled = false;
+        downloadBtn.innerHTML = '<span class="btn-icon">⬇️</span> Download Now';
+
+        // Hide info after 5 seconds
+        setTimeout(() => {
+            downloadInfo.classList.add('hidden');
+        }, 5000);
+    }
 }
 
 function handleStream() {

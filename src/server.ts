@@ -26,6 +26,7 @@ app.use((req, res, next) => {
     "Accept",
     "Origin",
   ].join(", "));
+  res.header("Access-Control-Expose-Headers", "Content-Disposition");
   if (req.method === "OPTIONS") {
     res.sendStatus(204);
     return;
