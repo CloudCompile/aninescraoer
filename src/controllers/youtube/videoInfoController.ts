@@ -2,29 +2,48 @@ import { Request, Response } from "express";
 import { YtdlCore } from "@ybd-project/ytdl-core";
 import type { YouTubeVideoInfo, VideoFormat } from "../../types/youtube/youtube";
 
-// Create ytdl instance and initialize poToken
+// Create ytdl instance with enhanced configuration to avoid bot detection  
 const ytdl = new YtdlCore({
-  logDisplay: [] // Disable logs in production
+  // Minimal logging - only errors
+  logDisplay: ['error'],
+  // Disable automatic poToken generation since it doesn't work reliably in Node.js
+  disablePoTokenAutoGeneration: true,
+  // Use only the most reliable mobile clients (ios, android)
+  // These are less likely to trigger bot detection than web clients
+  clients: ['ios', 'android'],
+  // Disable default clients to prevent using web/mweb/tv which are more likely to be blocked
+  disableDefaultClients: true,
+  // Disable file cache to avoid stale data
+  disableFileCache: true,
+  // Don't include API responses to reduce payload
+  includesPlayerAPIResponse: false,
+  includesNextAPIResponse: false
 });
 
-// Pre-generate poToken to avoid bot detection
+// Pre-generate poToken to avoid bot detection (optional - may not work in Node.js)
+// Commenting out since poToken generation doesn't work in Node.js without browser
+/*
+let poTokenInitialized = false;
 let poTokenInitializing: Promise<void> | null = null;
 
 async function initializePoToken() {
-  if (poTokenInitializing) {
-    // Already initializing, wait for it to complete
-    return poTokenInitializing;
+  if (poTokenInitialized) {
+    return;
   }
   
-  if (ytdl.poToken) {
-    // Already initialized
-    return;
+  if (poTokenInitializing) {
+    return poTokenInitializing;
   }
   
   poTokenInitializing = (async () => {
     try {
-      await ytdl.generatePoToken();
-      console.log("PoToken generated successfully");
+      const result = await ytdl.generatePoToken();
+      if (result.poToken && result.visitorData) {
+        console.log("PoToken and VisitorData generated successfully");
+        poTokenInitialized = true;
+      } else {
+        console.warn("PoToken generation returned empty values - continuing without it");
+      }
     } catch (error) {
       console.error("Failed to generate poToken:", error);
     } finally {
@@ -37,12 +56,10 @@ async function initializePoToken() {
 
 // Initialize on module load
 initializePoToken();
+*/
 
 export async function getVideoInfo(req: Request, res: Response) {
   try {
-    // Ensure poToken is initialized
-    await initializePoToken();
-    
     const { videoId } = req.params;
     const { url } = req.query;
 
