@@ -43,7 +43,28 @@ Create a `.env` file in the root directory:
 
 ```env
 PORT=3001
+
+# Optional: YouTube PoToken and VisitorData for improved bot protection
+# These help avoid "Sign in to confirm you're not a bot" errors for certain videos
+# Note: These tokens expire periodically and need to be regenerated
+# To obtain these tokens, you can use browser DevTools:
+# 1. Open YouTube in your browser
+# 2. Open DevTools (F12) -> Network tab
+# 3. Play any video and look for requests to "player" endpoint
+# 4. Find the "poToken" and "visitorData" in the request headers or payload
+YOUTUBE_PO_TOKEN=your_po_token_here
+YOUTUBE_VISITOR_DATA=your_visitor_data_here
 ```
+
+### ⚠️ YouTube Bot Detection
+
+Due to YouTube's anti-bot measures, some videos may return errors like "Sign in to confirm you're not a bot". This is a limitation of the underlying YouTube API library when running in Node.js environments.
+
+**Workarounds:**
+- Most popular videos work without additional configuration
+- For better reliability, provide `YOUTUBE_PO_TOKEN` and `YOUTUBE_VISITOR_DATA` environment variables
+- These tokens expire and need periodic renewal (typically every few hours)
+- Some age-restricted or region-locked videos may still fail even with tokens
 
 ## 📚 API Documentation
 

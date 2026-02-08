@@ -2,29 +2,54 @@ import { Request, Response } from "express";
 import { YtdlCore } from "@ybd-project/ytdl-core";
 import type { YouTubeVideoInfo, VideoFormat } from "../../types/youtube/youtube";
 
-// Create ytdl instance and initialize poToken
+// Create ytdl instance with enhanced configuration to avoid bot detection  
+// PoToken and visitorData can be provided via environment variables for better bot protection
 const ytdl = new YtdlCore({
-  logDisplay: [] // Disable logs in production
+  // Enable detailed logging to diagnose bot detection issues
+  logDisplay: ['error', 'warning', 'info'],
+  // Disable automatic poToken generation since it doesn't work reliably in Node.js
+  disablePoTokenAutoGeneration: true,
+  // Use manual poToken if provided via environment variable
+  poToken: process.env.YOUTUBE_PO_TOKEN || undefined,
+  visitorData: process.env.YOUTUBE_VISITOR_DATA || undefined,
+  // Use multiple client types for better fallback
+  // android and tvEmbedded are most reliable for avoiding bot detection
+  clients: ['android', 'tvEmbedded', 'webEmbedded'],
+  // Disable default clients to have full control
+  disableDefaultClients: true,
+  // Disable file cache to avoid stale data
+  disableFileCache: true,
+  // Parse HLS format for live streams
+  parsesHLSFormat: true,
+  // Don't include API responses to reduce payload
+  includesPlayerAPIResponse: false,
+  includesNextAPIResponse: false
 });
 
-// Pre-generate poToken to avoid bot detection
+// Pre-generate poToken to avoid bot detection (optional - may not work in Node.js)
+// Commenting out since poToken generation doesn't work in Node.js without browser
+/*
+let poTokenInitialized = false;
 let poTokenInitializing: Promise<void> | null = null;
 
 async function initializePoToken() {
-  if (poTokenInitializing) {
-    // Already initializing, wait for it to complete
-    return poTokenInitializing;
+  if (poTokenInitialized) {
+    return;
   }
   
-  if (ytdl.poToken) {
-    // Already initialized
-    return;
+  if (poTokenInitializing) {
+    return poTokenInitializing;
   }
   
   poTokenInitializing = (async () => {
     try {
-      await ytdl.generatePoToken();
-      console.log("PoToken generated successfully");
+      const result = await ytdl.generatePoToken();
+      if (result.poToken && result.visitorData) {
+        console.log("PoToken and VisitorData generated successfully");
+        poTokenInitialized = true;
+      } else {
+        console.warn("PoToken generation returned empty values - continuing without it");
+      }
     } catch (error) {
       console.error("Failed to generate poToken:", error);
     } finally {
@@ -37,12 +62,10 @@ async function initializePoToken() {
 
 // Initialize on module load
 initializePoToken();
+*/
 
 export async function getVideoInfo(req: Request, res: Response) {
   try {
-    // Ensure poToken is initialized
-    await initializePoToken();
-    
     const { videoId } = req.params;
     const { url } = req.query;
 
@@ -60,7 +83,7 @@ export async function getVideoInfo(req: Request, res: Response) {
 
     const info = await ytdl.getFullInfo(videoUrl);
 
-    const formats: VideoFormat[] = info.formats.map((format: any) => ({
+    const formats: VideoFormat[] = (info.formats || []).map((format: any) => ({
       quality: format.quality?.label || format.quality?.text || "unknown",
       url: format.url,
       mimeType: format.mimeType || "unknown",
@@ -96,12 +119,41 @@ export async function getVideoInfo(req: Request, res: Response) {
       formats,
     };
 
+    // Check if we got valid video data
+    if (!videoInfo.videoId || !videoInfo.title || !formats || formats.length === 0) {
+      return res.status(429).json({
+        error: "YouTube bot detection triggered",
+        message: "This video is currently unavailable due to YouTube's bot protection. The video data could not be retrieved.",
+        suggestion: "Try again later, or provide YOUTUBE_PO_TOKEN and YOUTUBE_VISITOR_DATA environment variables for better reliability. See README for details.",
+        videoId: req.params.videoId || (typeof req.query.url === "string" ? req.query.url : "unknown"),
+        partialData: {
+          channelId: videoInfo.author.channelId,
+          likes: videoInfo.stats.likes
+        }
+      });
+    }
+
     res.json(videoInfo);
   } catch (error) {
     console.error("Error fetching video info:", error);
-    res.status(500).json({
-      error: "Failed to fetch video information",
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
+    
+    // Check if it's a bot detection error
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const isBotError = errorMessage.includes("Sign in to confirm you're not a bot") || 
+                       errorMessage.includes("All player APIs responded with an error");
+    
+    if (isBotError) {
+      res.status(429).json({
+        error: "YouTube bot detection triggered",
+        message: "This video is currently unavailable due to YouTube's bot protection. This typically happens with certain videos that have stricter access controls.",
+        suggestion: "Try again later, or provide YOUTUBE_PO_TOKEN and YOUTUBE_VISITOR_DATA environment variables for better reliability.",
+        videoId: req.params.videoId || (typeof req.query.url === "string" ? req.query.url : "unknown")
+      });
+    } else {
+      res.status(500).json({
+        error: "Failed to fetch video information",
+        message: errorMessage,
+      });
+    }
   }
 }

@@ -1,29 +1,54 @@
 import { Request, Response } from "express";
 import { YtdlCore, toPipeableStream } from "@ybd-project/ytdl-core";
 
-// Create ytdl instance and initialize poToken
+// Create ytdl instance with enhanced configuration to avoid bot detection  
+// PoToken and visitorData can be provided via environment variables for better bot protection
 const ytdl = new YtdlCore({
-  logDisplay: [] // Disable logs in production
+  // Minimal logging - only errors
+  logDisplay: ['error'],
+  // Disable automatic poToken generation since it doesn't work reliably in Node.js
+  disablePoTokenAutoGeneration: true,
+  // Use manual poToken if provided via environment variable
+  poToken: process.env.YOUTUBE_PO_TOKEN || undefined,
+  visitorData: process.env.YOUTUBE_VISITOR_DATA || undefined,
+  // Use multiple client types for better fallback
+  // android and tvEmbedded are most reliable for avoiding bot detection
+  clients: ['android', 'tvEmbedded', 'webEmbedded'],
+  // Disable default clients to have full control
+  disableDefaultClients: true,
+  // Disable file cache to avoid stale data
+  disableFileCache: true,
+  // Parse HLS format for live streams
+  parsesHLSFormat: true,
+  // Don't include API responses to reduce payload
+  includesPlayerAPIResponse: false,
+  includesNextAPIResponse: false
 });
 
-// Pre-generate poToken to avoid bot detection
+// Pre-generate poToken to avoid bot detection (optional - may not work in Node.js)
+// Commenting out since poToken generation doesn't work in Node.js without browser
+/*
+let poTokenInitialized = false;
 let poTokenInitializing: Promise<void> | null = null;
 
 async function initializePoToken() {
-  if (poTokenInitializing) {
-    // Already initializing, wait for it to complete
-    return poTokenInitializing;
+  if (poTokenInitialized) {
+    return;
   }
   
-  if (ytdl.poToken) {
-    // Already initialized
-    return;
+  if (poTokenInitializing) {
+    return poTokenInitializing;
   }
   
   poTokenInitializing = (async () => {
     try {
-      await ytdl.generatePoToken();
-      console.log("PoToken generated successfully");
+      const result = await ytdl.generatePoToken();
+      if (result.poToken && result.visitorData) {
+        console.log("PoToken and VisitorData generated successfully");
+        poTokenInitialized = true;
+      } else {
+        console.warn("PoToken generation returned empty values - continuing without it");
+      }
     } catch (error) {
       console.error("Failed to generate poToken:", error);
     } finally {
@@ -36,12 +61,10 @@ async function initializePoToken() {
 
 // Initialize on module load
 initializePoToken();
+*/
 
 export async function downloadVideo(req: Request, res: Response) {
   try {
-    // Ensure poToken is initialized
-    await initializePoToken();
-    
     const { videoId } = req.params;
     const { url, quality, filter } = req.query;
 
@@ -84,9 +107,6 @@ export async function downloadVideo(req: Request, res: Response) {
 
 export async function streamVideo(req: Request, res: Response) {
   try {
-    // Ensure poToken is initialized
-    await initializePoToken();
-    
     const { videoId } = req.params;
     const { url, quality, filter } = req.query;
 
