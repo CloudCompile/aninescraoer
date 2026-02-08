@@ -144,3 +144,7 @@ package-lock.json
 
 # ytdl-core generated files
 *-player-script.*
+
+# yt-dlp binary (downloads automatically)
+yt-dlp
+yt-dlp.exe
