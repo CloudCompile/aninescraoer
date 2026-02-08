@@ -23,7 +23,7 @@
     "vitest": "^2.0.5"
   },
   "dependencies": {
-    "@distube/ytdl-core": "^4.16.12",
+    "@ybd-project/ytdl-core": "^6.0.8",
     "axios": "^1.6.7",
     "cheerio": "^1.0.0-rc.12",
     "crypto-js": "^4.2.0",
