@@ -133,3 +133,9 @@ dist
 node_modules/
 
 package-lock.json
+
+# Player script temp files
+*-player-script.js
+
+# Detached process logs
+/tmp/copilot-detached-*.log

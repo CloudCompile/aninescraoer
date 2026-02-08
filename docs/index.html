@@ -3,42 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anime Streaming - Watch Free Anime</title>
+    <title>YouTube Downloader - Download Videos & Audio</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📺</text></svg>">
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <a href="#" class="logo" onclick="showHome(); return false;">
-                <span class="logo-icon">🎬</span>
-                <span class="logo-text">AnimeStream</span>
-            </a>
-            <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Search anime..." onkeyup="handleSearchKeyup(event)">
-                <button onclick="searchAnime()" id="searchBtn">🔍</button>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">📺</span>
+                <span class="logo-text">YouTube Downloader</span>
             </div>
-            <nav>
-                <a href="#" onclick="showHome(); return false;">Home</a>
-                <a href="#" onclick="showCategory('top-airing'); return false;">Top Airing</a>
-                <a href="#" onclick="showCategory('most-popular'); return false;">Popular</a>
-                <a href="#" onclick="showCategory('movie'); return false;">Movies</a>
-            </nav>
-        </div>
-    </header>
+            <p class="tagline">Download YouTube videos and audio in various formats</p>
+        </header>
 
-    <main id="mainContent">
-        <!-- Content will be dynamically loaded here -->
-        <div class="loading" id="loading">
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="Search YouTube videos or paste video URL..."
+                    autocomplete="off"
+                >
+                <button id="searchBtn" class="search-btn">
+                    <span class="search-icon">🔍</span>
+                    Search
+                </button>
+            </div>
+            <p class="search-hint">Enter a search term or paste a YouTube video URL</p>
+        </section>
+
+        <!-- Tabs for Search Results / Video Info -->
+        <div class="tabs" id="tabs" style="display: none;">
+            <button class="tab-btn active" data-tab="search">Search Results</button>
+            <button class="tab-btn" data-tab="video">Video Info</button>
+        </div>
+
+        <!-- Search Results Section -->
+        <section id="searchResults" class="search-results hidden">
+            <div id="resultsGrid" class="results-grid">
+                <!-- Search results will be inserted here -->
+            </div>
+        </section>
+
+        <!-- Video Info Section -->
+        <section id="videoInfo" class="video-info hidden">
+            <div class="video-details">
+                <!-- Video thumbnail -->
+                <div class="video-thumbnail-container">
+                    <img id="videoThumbnail" src="" alt="Video thumbnail" class="video-thumbnail">
+                    <div class="video-duration" id="videoDuration"></div>
+                </div>
+
+                <!-- Video metadata -->
+                <div class="video-metadata">
+                    <h2 id="videoTitle" class="video-title"></h2>
+                    <div class="video-channel">
+                        <span id="channelName" class="channel-name"></span>
+                    </div>
+                    <div class="video-stats">
+                        <span id="videoViews" class="stat-item"></span>
+                        <span id="videoLikes" class="stat-item"></span>
+                        <span id="videoDate" class="stat-item"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Download Options -->
+            <div class="download-section">
+                <h3 class="section-title">Download Options</h3>
+                
+                <!-- Quality Selector -->
+                <div class="format-selector">
+                    <label class="format-label">Select Quality:</label>
+                    <select id="qualitySelect" class="quality-select">
+                        <option value="highest">Highest Quality (Video + Audio)</option>
+                        <option value="720p">720p (HD)</option>
+                        <option value="480p">480p (SD)</option>
+                        <option value="360p">360p</option>
+                        <option value="highestaudio">Audio Only (Best Quality)</option>
+                        <option value="lowestaudio">Audio Only (Low Quality)</option>
+                    </select>
+                </div>
+
+                <!-- Download Buttons -->
+                <div class="download-buttons">
+                    <button id="downloadBtn" class="btn btn-primary">
+                        <span class="btn-icon">⬇️</span>
+                        Download Now
+                    </button>
+                    <button id="streamBtn" class="btn btn-secondary">
+                        <span class="btn-icon">▶️</span>
+                        Stream/Preview
+                    </button>
+                    <button id="copyLinkBtn" class="btn btn-tertiary">
+                        <span class="btn-icon">🔗</span>
+                        Copy Download Link
+                    </button>
+                </div>
+
+                <!-- Download Info -->
+                <div id="downloadInfo" class="download-info hidden">
+                    <p class="info-text"></p>
+                </div>
+            </div>
+
+            <!-- Video Description -->
+            <div class="video-description-section">
+                <h3 class="section-title">Description</h3>
+                <div id="videoDescription" class="video-description"></div>
+            </div>
+        </section>
+
+        <!-- Playlist Section (for future enhancement) -->
+        <section id="playlistInfo" class="playlist-info hidden">
+            <h3 class="section-title">Playlist Videos</h3>
+            <div id="playlistVideos" class="playlist-videos">
+                <!-- Playlist videos will be inserted here -->
+            </div>
+        </section>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading hidden">
             <div class="spinner"></div>
             <p>Loading...</p>
         </div>
-    </main>
 
-    <footer>
-        <p>Built with ❤️ using <a href="https://api-anime-rouge.vercel.app" target="_blank">Anime API</a></p>
-        <p>This is a fan-made project for educational purposes only.</p>
-    </footer>
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message hidden">
+            <span class="error-icon">⚠️</span>
+            <p id="errorText"></p>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>
+                <strong>⚠️ Disclaimer:</strong> This tool is for educational purposes only. 
+                Please respect YouTube's Terms of Service and copyright laws.
+            </p>
+            <p class="footer-links">
+                <a href="https://github.com/CloudCompile/aninescraoer" target="_blank">GitHub</a> • 
+                <a href="https://github.com/CloudCompile/aninescraoer/blob/main/README.md" target="_blank">API Docs</a>
+            </p>
+        </footer>
+    </div>
 
     <script src="app.js"></script>
 </body>
