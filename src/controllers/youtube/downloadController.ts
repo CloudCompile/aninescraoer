@@ -1,8 +1,33 @@
 import { Request, Response } from "express";
-import ytdl from "@distube/ytdl-core";
+import { YtdlCore, toPipeableStream } from "@ybd-project/ytdl-core";
+
+// Create ytdl instance and initialize poToken
+const ytdl = new YtdlCore({
+  logDisplay: [] // Disable logs in production
+});
+
+// Pre-generate poToken to avoid bot detection
+let poTokenInitialized = false;
+async function initializePoToken() {
+  if (!poTokenInitialized) {
+    try {
+      const tokens = await ytdl.generatePoToken();
+      console.log("PoToken generated successfully");
+      poTokenInitialized = true;
+    } catch (error) {
+      console.error("Failed to generate poToken:", error);
+    }
+  }
+}
+
+// Initialize on module load
+initializePoToken();
 
 export async function downloadVideo(req: Request, res: Response) {
   try {
+    // Ensure poToken is initialized
+    await initializePoToken();
+    
     const { videoId } = req.params;
     const { url, quality, filter } = req.query;
 
@@ -18,34 +43,20 @@ export async function downloadVideo(req: Request, res: Response) {
       });
     }
 
-    if (!ytdl.validateURL(videoUrl)) {
-      return res.status(400).json({
-        error: "Invalid YouTube URL",
-      });
-    }
-
-    const info = await ytdl.getInfo(videoUrl);
+    const info = await ytdl.getBasicInfo(videoUrl);
     const title = info.videoDetails.title.replace(/[^\w\s-]/g, "");
-
-    // Set quality and filter options
-    const downloadOptions: ytdl.downloadOptions = {};
-    
-    if (quality && typeof quality === "string") {
-      downloadOptions.quality = quality as any;
-    } else {
-      downloadOptions.quality = "highest";
-    }
-
-    if (filter && typeof filter === "string") {
-      downloadOptions.filter = filter as any;
-    }
 
     // Set headers for download
     res.setHeader("Content-Disposition", `attachment; filename="${title}.mp4"`);
     res.setHeader("Content-Type", "video/mp4");
 
-    // Stream the video
-    ytdl(videoUrl, downloadOptions).pipe(res);
+    // Download and stream the video
+    const stream = await ytdl.download(videoUrl, {
+      quality: quality && typeof quality === "string" ? quality as any : "highest",
+      filter: filter && typeof filter === "string" ? filter as any : undefined,
+    });
+    
+    toPipeableStream(stream).pipe(res);
   } catch (error) {
     console.error("Error downloading video:", error);
     if (!res.headersSent) {
@@ -59,6 +70,9 @@ export async function downloadVideo(req: Request, res: Response) {
 
 export async function streamVideo(req: Request, res: Response) {
   try {
+    // Ensure poToken is initialized
+    await initializePoToken();
+    
     const { videoId } = req.params;
     const { url, quality, filter } = req.query;
 
@@ -74,30 +88,16 @@ export async function streamVideo(req: Request, res: Response) {
       });
     }
 
-    if (!ytdl.validateURL(videoUrl)) {
-      return res.status(400).json({
-        error: "Invalid YouTube URL",
-      });
-    }
-
-    // Set quality and filter options
-    const downloadOptions: ytdl.downloadOptions = {};
-    
-    if (quality && typeof quality === "string") {
-      downloadOptions.quality = quality as any;
-    } else {
-      downloadOptions.quality = "highest";
-    }
-
-    if (filter && typeof filter === "string") {
-      downloadOptions.filter = filter as any;
-    }
-
     // Set headers for streaming
     res.setHeader("Content-Type", "video/mp4");
 
-    // Stream the video
-    ytdl(videoUrl, downloadOptions).pipe(res);
+    // Download and stream the video
+    const stream = await ytdl.download(videoUrl, {
+      quality: quality && typeof quality === "string" ? quality as any : "highest",
+      filter: filter && typeof filter === "string" ? filter as any : undefined,
+    });
+    
+    toPipeableStream(stream).pipe(res);
   } catch (error) {
     console.error("Error streaming video:", error);
     if (!res.headersSent) {
