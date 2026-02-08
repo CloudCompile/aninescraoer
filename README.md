@@ -52,25 +52,51 @@ PORT=3001
 YOUTUBE_COOKIE=your_youtube_cookies_here
 ```
 
-### ⚠️ YouTube Bot Detection & Video Access
+## ⚠️ YouTube Bot Detection & Video Access
 
-This API uses @distube/ytdl-core which works well for most public YouTube videos. However, some videos may be inaccessible:
+This API uses a **hybrid approach** for maximum compatibility:
+
+1. **Primary**: @distube/ytdl-core (fast, JavaScript-based)
+2. **Fallback**: yt-dlp (Python-based, most robust against bot detection)
+
+The system automatically falls back to yt-dlp when @distube/ytdl-core encounters bot detection.
 
 **Videos that work:**
 - Most public videos without restrictions
 - Example: https://www.youtube.com/watch?v=dQw4w9WgXcQ (Rick Astley - Never Gonna Give You Up)
+- ✅ **Backend**: @distube/ytdl-core (fast response)
 
-**Videos that may fail:**
-- Age-restricted videos (requires cookies from a logged-in YouTube account)
-- Region-locked videos
+**Videos that may need yt-dlp:**
+- Age-restricted videos
+- Region-locked videos  
+- Videos with strict bot detection
+- ✅ **Backend**: yt-dlp (automatic fallback)
+
+**Videos that require cookies:**
 - Private videos
 - YouTube Premium content
-- Some videos with strict bot detection
+- Some age-restricted content
+- ⚠️ Set YOUTUBE_COOKIE environment variable (see below)
 
-**Workarounds for restricted videos:**
-- Provide YouTube cookies via `YOUTUBE_COOKIE` environment variable (see above)
-- Cookies can be obtained from a logged-in browser session
-- Note: Cookies expire and need periodic renewal
+**Force specific backend:**
+```bash
+# Use yt-dlp explicitly
+curl http://localhost:3001/youtube/info/VIDEO_ID?backend=ytdlp
+
+# Default (tries ytdl-core first, falls back to yt-dlp)
+curl http://localhost:3001/youtube/info/VIDEO_ID
+```
+
+### 🔧 Setup
+
+**Automatic Setup:**
+- yt-dlp binary downloads automatically on first use
+- No manual installation required!
+
+**For age-restricted videos:**
+- Set YOUTUBE_COOKIE environment variable
+- Extract cookies from logged-in browser session
+- Format: `cookie1=value1; cookie2=value2`
 
 ## 📚 API Documentation
 
