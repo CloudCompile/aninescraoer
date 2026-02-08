@@ -7,17 +7,31 @@ const ytdl = new YtdlCore({
 });
 
 // Pre-generate poToken to avoid bot detection
-let poTokenInitialized = false;
+let poTokenInitializing: Promise<void> | null = null;
+
 async function initializePoToken() {
-  if (!poTokenInitialized) {
+  if (poTokenInitializing) {
+    // Already initializing, wait for it to complete
+    return poTokenInitializing;
+  }
+  
+  if (ytdl.poToken) {
+    // Already initialized
+    return;
+  }
+  
+  poTokenInitializing = (async () => {
     try {
-      const tokens = await ytdl.generatePoToken();
+      await ytdl.generatePoToken();
       console.log("PoToken generated successfully");
-      poTokenInitialized = true;
     } catch (error) {
       console.error("Failed to generate poToken:", error);
+    } finally {
+      poTokenInitializing = null;
     }
-  }
+  })();
+  
+  return poTokenInitializing;
 }
 
 // Initialize on module load

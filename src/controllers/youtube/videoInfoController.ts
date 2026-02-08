@@ -8,17 +8,31 @@ const ytdl = new YtdlCore({
 });
 
 // Pre-generate poToken to avoid bot detection
-let poTokenInitialized = false;
+let poTokenInitializing: Promise<void> | null = null;
+
 async function initializePoToken() {
-  if (!poTokenInitialized) {
+  if (poTokenInitializing) {
+    // Already initializing, wait for it to complete
+    return poTokenInitializing;
+  }
+  
+  if (ytdl.poToken) {
+    // Already initialized
+    return;
+  }
+  
+  poTokenInitializing = (async () => {
     try {
-      const tokens = await ytdl.generatePoToken();
+      await ytdl.generatePoToken();
       console.log("PoToken generated successfully");
-      poTokenInitialized = true;
     } catch (error) {
       console.error("Failed to generate poToken:", error);
+    } finally {
+      poTokenInitializing = null;
     }
-  }
+  })();
+  
+  return poTokenInitializing;
 }
 
 // Initialize on module load
@@ -57,7 +71,7 @@ export async function getVideoInfo(req: Request, res: Response) {
       videoCodec: format.codecs?.split(",")?.[0] || undefined,
       audioCodec: format.codecs?.split(",")?.[1] || undefined,
       qualityLabel: format.quality?.label || undefined,
-      fps: format.approxDurationMs ? undefined : undefined, // FPS not directly available
+      fps: undefined, // FPS not directly available in new library
       width: format.width || undefined,
       height: format.height || undefined,
     }));
