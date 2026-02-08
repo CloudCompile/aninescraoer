@@ -119,6 +119,20 @@ export async function getVideoInfo(req: Request, res: Response) {
       formats,
     };
 
+    // Check if we got valid video data
+    if (!videoInfo.videoId || !videoInfo.title || formats.length === 0) {
+      return res.status(429).json({
+        error: "YouTube bot detection triggered",
+        message: "This video is currently unavailable due to YouTube's bot protection. The video data could not be retrieved.",
+        suggestion: "Try again later, or provide YOUTUBE_PO_TOKEN and YOUTUBE_VISITOR_DATA environment variables for better reliability. See README for details.",
+        videoId: req.params.videoId || (typeof req.query.url === "string" ? req.query.url : "unknown"),
+        partialData: {
+          channelId: videoInfo.author.channelId || undefined,
+          likes: videoInfo.stats.likes
+        }
+      });
+    }
+
     res.json(videoInfo);
   } catch (error) {
     console.error("Error fetching video info:", error);
