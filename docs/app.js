@@ -1,7 +1,7 @@
 // API Configuration
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3001'
-    : 'https://api-anime-rouge.vercel.app';
+    : 'https://aninescraper.vercel.app';
 
 // State Management
 let currentVideoId = null;
