@@ -115,7 +115,7 @@ export async function downloadVideo(req: Request, res: Response) {
     if (!res.headersSent) {
       const errMsg = error instanceof Error ? error.message : String(error);
       const isBotDetected = errMsg.includes("not a bot") || errMsg.includes("Sign in to confirm");
-      const isPythonMissing = errMsg.includes("Python not available") || errMsg.includes("python3");
+      const isPythonMissing = errMsg.includes("Python not available") || errMsg.includes("'python3': No such file or directory") || errMsg.includes("python: not found");
       
       res.status(isBotDetected ? 429 : 500).json({
         error: isBotDetected
@@ -215,7 +215,7 @@ export async function streamVideo(req: Request, res: Response) {
     if (!res.headersSent) {
       const errMsg = error instanceof Error ? error.message : String(error);
       const isBotDetected = errMsg.includes("not a bot") || errMsg.includes("Sign in to confirm");
-      const isPythonMissing = errMsg.includes("Python not available") || errMsg.includes("python3");
+      const isPythonMissing = errMsg.includes("Python not available") || errMsg.includes("'python3': No such file or directory") || errMsg.includes("python: not found");
       
       res.status(isBotDetected ? 429 : 500).json({
         error: isBotDetected
