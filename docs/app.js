@@ -176,15 +176,25 @@ async function getVideoInfo(videoId) {
         const response = await fetch(`${API_BASE}/youtube/info/${videoId}`);
         
         if (!response.ok) {
-            throw new Error('Failed to get video information');
+            const errorData = await response.json().catch(() => ({}));
+            if (response.status === 429 || (errorData.error && errorData.error.includes('bot detection'))) {
+                throw new Error('YouTube bot detection is active. The server may need cookie configuration.');
+            }
+            throw new Error(errorData.error || 'Failed to get video information');
         }
 
         const data = await response.json();
         hideLoading();
+        
+        // Show notice if backend had to fall back
+        if (data.notice) {
+            console.log('Backend notice:', data.notice);
+        }
+        
         return data;
     } catch (error) {
         console.error('Video info error:', error);
-        showError('Failed to get video information. Please try again.');
+        showError(error.message || 'Failed to get video information. Please try again.');
         return null;
     }
 }
@@ -254,7 +264,7 @@ async function loadVideoInfo(videoId) {
 
     // Update thumbnail
     videoThumbnail.src = currentVideoData.thumbnail;
-    videoDuration.textContent = formatDuration(currentVideoData.duration);
+    videoDuration.textContent = currentVideoData.duration ? formatDuration(currentVideoData.duration) : '';
 
     // Update metadata
     videoTitle.textContent = currentVideoData.title;
@@ -263,11 +273,19 @@ async function loadVideoInfo(videoId) {
     videoLikes.innerHTML = currentVideoData.stats.likes 
         ? `👍 ${formatNumber(currentVideoData.stats.likes)} likes`
         : '';
-    videoDate.innerHTML = `📅 ${formatDate(currentVideoData.uploadDate)}`;
+    videoDate.innerHTML = currentVideoData.uploadDate 
+        ? `📅 ${formatDate(currentVideoData.uploadDate)}`
+        : '';
 
     // Update description (truncated)
-    const descText = currentVideoData.description.substring(0, 500);
-    videoDescription.textContent = descText + (currentVideoData.description.length > 500 ? '...' : '');
+    const descText = (currentVideoData.description || '').substring(0, 500);
+    videoDescription.textContent = descText + ((currentVideoData.description || '').length > 500 ? '...' : '');
+
+    // Show notice if backend had limited capabilities
+    if (currentVideoData.notice) {
+        downloadInfo.classList.remove('hidden');
+        downloadInfo.querySelector('.info-text').textContent = `ℹ️ ${currentVideoData.notice}`;
+    }
 
     // Show video info section
     videoInfoSection.classList.remove('hidden');
@@ -275,7 +293,7 @@ async function loadVideoInfo(videoId) {
     switchTab('video');
 }
 
-function handleDownload() {
+async function handleDownload() {
     if (!currentVideoId) {
         showError('No video selected');
         return;
@@ -284,17 +302,62 @@ function handleDownload() {
     const quality = qualitySelect.value;
     const downloadUrl = `${API_BASE}/youtube/download/${currentVideoId}?quality=${quality}`;
     
-    // Show download info
+    // Disable button and show progress
+    downloadBtn.disabled = true;
+    downloadBtn.innerHTML = '<span class="btn-icon">⏳</span> Downloading...';
     downloadInfo.classList.remove('hidden');
-    downloadInfo.querySelector('.info-text').textContent = '🎉 Download started! Check your browser downloads.';
+    downloadInfo.querySelector('.info-text').textContent = '⏳ Preparing download... This may take a moment.';
 
-    // Trigger download
-    window.location.href = downloadUrl;
+    try {
+        const response = await fetch(downloadUrl);
 
-    // Hide info after 5 seconds
-    setTimeout(() => {
-        downloadInfo.classList.add('hidden');
-    }, 5000);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Download failed (HTTP ${response.status})`);
+        }
+
+        // Get filename from Content-Disposition header if available
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `${currentVideoData?.title || 'video'}.mp4`;
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
+            if (match) {
+                filename = match[1];
+            }
+        }
+
+        // Stream the response into a blob
+        const blob = await response.blob();
+
+        // Create a temporary download link and trigger download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        downloadInfo.querySelector('.info-text').textContent = '🎉 Download complete! Check your browser downloads.';
+    } catch (error) {
+        console.error('Download error:', error);
+        const msg = error.message || 'Unknown error';
+        if (msg.includes('bot detection') || msg.includes('429')) {
+            downloadInfo.querySelector('.info-text').textContent = '❌ YouTube bot detection active. The server needs YOUTUBE_COOKIE to be configured. Try again later or contact the administrator.';
+        } else {
+            downloadInfo.querySelector('.info-text').textContent = `❌ Download failed: ${msg}`;
+        }
+    } finally {
+        // Re-enable button
+        downloadBtn.disabled = false;
+        downloadBtn.innerHTML = '<span class="btn-icon">⬇️</span> Download Now';
+
+        // Hide info after 5 seconds
+        setTimeout(() => {
+            downloadInfo.classList.add('hidden');
+        }, 5000);
+    }
 }
 
 function handleStream() {
