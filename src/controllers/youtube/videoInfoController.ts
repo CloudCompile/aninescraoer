@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import ytdl from "@distube/ytdl-core";
 import type { YouTubeVideoInfo, VideoFormat } from "../../types/youtube/youtube";
 import { getVideoInfoYtDlp, fetchYtDlpMetadata } from "./ytdlpController";
+import { extractVideoInfo } from "./customExtractor";
 import { videoInfo as ytExtVideoInfo } from "youtube-ext";
 
 // Create ytdl agent with cookies if provided for better access to restricted videos
@@ -78,7 +79,7 @@ export async function getVideoInfo(req: Request, res: Response) {
       videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
     } else if (url && typeof url === "string") {
       videoUrl = url;
-      // Extract video ID from URL for youtube-ext fallback
+      // Extract video ID from URL for fallbacks
       const match = url.match(/[?&]v=([^&]+)/);
       if (match) resolvedVideoId = match[1];
     } else {
@@ -93,7 +94,20 @@ export async function getVideoInfo(req: Request, res: Response) {
       return getVideoInfoYtDlp(req, res);
     }
 
-    // Strategy 1: Try @distube/ytdl-core first
+    // Strategy 1: Custom extractor (no third-party YouTube libs)
+    if (resolvedVideoId) {
+      try {
+        console.log("Trying custom extractor for video info");
+        const result = await extractVideoInfo(resolvedVideoId);
+        const info = result.videoInfo;
+        (info as any).backend = "custom";
+        return res.json(info);
+      } catch (customError) {
+        console.error("Custom extractor error:", customError instanceof Error ? customError.message : customError);
+      }
+    }
+
+    // Strategy 2: Try @distube/ytdl-core
     try {
       const options = agent ? { agent } : {};
       const info = await ytdl.getInfo(videoUrl, options);
@@ -146,7 +160,7 @@ export async function getVideoInfo(req: Request, res: Response) {
       console.error("@distube/ytdl-core error:", ytdlError instanceof Error ? ytdlError.message : ytdlError);
     }
 
-    // Strategy 2: Try yt-dlp
+    // Strategy 3: Try yt-dlp
     try {
       console.log("Trying yt-dlp fallback for video info");
       const metadata = await fetchYtDlpMetadata(videoUrl);
@@ -191,7 +205,7 @@ export async function getVideoInfo(req: Request, res: Response) {
       console.error("yt-dlp also failed:", ytdlpError instanceof Error ? ytdlpError.message : ytdlpError);
     }
 
-    // Strategy 3: Try youtube-ext (metadata only, no download URLs)
+    // Strategy 4: Try youtube-ext (metadata only, no download URLs)
     if (resolvedVideoId) {
       console.log("Trying youtube-ext fallback for video info");
       const extInfo = await getVideoInfoYouTubeExt(resolvedVideoId);

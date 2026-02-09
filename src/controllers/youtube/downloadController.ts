@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import ytdl from "@distube/ytdl-core";
 import { downloadVideoYtDlp, streamVideoYtDlp } from "./ytdlpController";
+import { extractVideoInfo, selectFormat, proxyVideoStream } from "./customExtractor";
 
 // Create ytdl agent with cookies if provided for better access to restricted videos
 const agent = process.env.YOUTUBE_COOKIE 
@@ -22,11 +23,14 @@ export async function downloadVideo(req: Request, res: Response) {
     const { url, quality, filter, backend } = req.query;
 
     let videoUrl = "";
+    let resolvedVideoId = videoId || "";
     
     if (videoId) {
       videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
     } else if (url && typeof url === "string") {
       videoUrl = url;
+      const match = url.match(/[?&]v=([^&]+)/);
+      if (match) resolvedVideoId = match[1];
     } else {
       return res.status(400).json({
         error: "Please provide either videoId parameter or url query parameter",
@@ -39,7 +43,35 @@ export async function downloadVideo(req: Request, res: Response) {
       return downloadVideoYtDlp(req, res);
     }
 
-    // Try @distube/ytdl-core first
+    // Strategy 1: Custom extractor (no third-party libs)
+    if (resolvedVideoId) {
+      try {
+        console.log("Trying custom extractor for download");
+        const result = await extractVideoInfo(resolvedVideoId);
+        const qualityStr = typeof quality === "string" ? quality : undefined;
+        const filterStr = typeof filter === "string" ? filter : undefined;
+        const format = selectFormat(result.formats, qualityStr, filterStr);
+        
+        if (format && format.url) {
+          const title = (result.videoInfo.title || "video").replace(/[^\w\s-]/g, "");
+          const isAudio = filterStr === "audioonly" || qualityStr === "highestaudio" || qualityStr === "lowestaudio";
+          
+          if (isAudio) {
+            res.setHeader("Content-Type", "audio/mp4");
+            res.setHeader("Content-Disposition", `attachment; filename="${title}.m4a"`);
+          } else {
+            res.setHeader("Content-Type", "video/mp4");
+            res.setHeader("Content-Disposition", `attachment; filename="${title}.mp4"`);
+          }
+          
+          return await proxyVideoStream(format.url, res, req.headers.range);
+        }
+      } catch (customError) {
+        console.error("Custom extractor download error:", customError instanceof Error ? customError.message : customError);
+      }
+    }
+
+    // Strategy 2: Try @distube/ytdl-core
     try {
       // Get basic info with agent if cookies are provided
       const infoOptions = agent ? { agent } : {};
@@ -99,11 +131,14 @@ export async function streamVideo(req: Request, res: Response) {
     const { url, quality, filter, backend } = req.query;
 
     let videoUrl = "";
+    let resolvedVideoId = videoId || "";
     
     if (videoId) {
       videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
     } else if (url && typeof url === "string") {
       videoUrl = url;
+      const match = url.match(/[?&]v=([^&]+)/);
+      if (match) resolvedVideoId = match[1];
     } else {
       return res.status(400).json({
         error: "Please provide either videoId parameter or url query parameter",
@@ -116,7 +151,26 @@ export async function streamVideo(req: Request, res: Response) {
       return streamVideoYtDlp(req, res);
     }
 
-    // Try @distube/ytdl-core first
+    // Strategy 1: Custom extractor (no third-party libs)
+    if (resolvedVideoId) {
+      try {
+        console.log("Trying custom extractor for streaming");
+        const result = await extractVideoInfo(resolvedVideoId);
+        const qualityStr = typeof quality === "string" ? quality : undefined;
+        const filterStr = typeof filter === "string" ? filter : undefined;
+        const format = selectFormat(result.formats, qualityStr, filterStr);
+        
+        if (format && format.url) {
+          const isAudio = filterStr === "audioonly" || qualityStr === "highestaudio" || qualityStr === "lowestaudio";
+          res.setHeader("Content-Type", isAudio ? "audio/mp4" : "video/mp4");
+          return await proxyVideoStream(format.url, res, req.headers.range);
+        }
+      } catch (customError) {
+        console.error("Custom extractor stream error:", customError instanceof Error ? customError.message : customError);
+      }
+    }
+
+    // Strategy 2: Try @distube/ytdl-core
     try {
       // Set headers for streaming
       res.setHeader("Content-Type", "video/mp4");
