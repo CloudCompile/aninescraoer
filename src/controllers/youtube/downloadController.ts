@@ -125,7 +125,7 @@ export async function downloadVideo(req: Request, res: Response) {
           : "Failed to download video",
         message: errMsg,
         suggestion: isPythonMissing
-          ? "All download methods (custom extractor, ytdl-core, and yt-dlp) were tried but failed. The server environment does not have Python installed for yt-dlp. Please try a different video or contact the administrator."
+          ? "All download methods were tried but failed. Server lacks Python for yt-dlp. Try a different video or contact the administrator."
           : undefined,
       });
     }
@@ -225,7 +225,7 @@ export async function streamVideo(req: Request, res: Response) {
           : "Failed to stream video",
         message: errMsg,
         suggestion: isPythonMissing
-          ? "All streaming methods (custom extractor, ytdl-core, and yt-dlp) were tried but failed. The server environment does not have Python installed for yt-dlp. Please try a different video or contact the administrator."
+          ? "All streaming methods were tried but failed. Server lacks Python for yt-dlp. Try a different video or contact the administrator."
           : undefined,
       });
     }
