@@ -187,7 +187,7 @@ function parseFormats(streamingData: any): VideoFormat[] {
     const container = mimeType.split(";")[0]?.split("/")[1] || "mp4";
 
     // Determine if format has video/audio
-    const hasVideo = isVideo && (format.width > 0 || Boolean(format.qualityLabel));
+    const hasVideo = isVideo && ((format.width ?? 0) > 0 || Boolean(format.qualityLabel));
     const hasAudio = isAudio || (isVideo && codecs.some((c: string) => c.startsWith("mp4a") || c.startsWith("opus")));
 
     formats.push({
@@ -199,7 +199,7 @@ function parseFormats(streamingData: any): VideoFormat[] {
       container,
       bitrate: format.bitrate,
       videoCodec: codecs.find(
-        (c: string) => c.startsWith("avc") || c.startsWith("vp") || c.startsWith("av0"),
+        (c: string) => c.startsWith("avc") || c.startsWith("vp") || c.startsWith("av01"),
       ),
       audioCodec: codecs.find(
         (c: string) => c.startsWith("mp4a") || c.startsWith("opus"),

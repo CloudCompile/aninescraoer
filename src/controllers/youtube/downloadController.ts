@@ -53,7 +53,7 @@ export async function downloadVideo(req: Request, res: Response) {
         const format = selectFormat(result.formats, qualityStr, filterStr);
         
         if (format && format.url) {
-          const title = (result.videoInfo.title || "video").replace(/[^\w\s-]/g, "");
+          const title = (result.videoInfo.title || "video").replace(/[^\w\s-]/g, "").replace(/\s+/g, "_");
           const isAudio = filterStr === "audioonly" || qualityStr === "highestaudio" || qualityStr === "lowestaudio";
           
           if (isAudio) {
