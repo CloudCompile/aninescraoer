@@ -90,10 +90,15 @@ async function initializeYtDlp() {
 
 // Common yt-dlp flags for all commands
 function getCommonArgs(): string[] {
-  return [
+  const args = [
     "--js-runtimes", `node:${nodePath}`,
     "--no-warnings",
   ];
+  
+  // Try to bypass bot detection with different player clients
+  args.push("--extractor-args", "youtube:player_client=android,web_embedded,ios");
+  
+  return args;
 }
 
 // Map quality parameter to yt-dlp format selector

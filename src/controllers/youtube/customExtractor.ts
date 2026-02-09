@@ -65,15 +65,86 @@ function buildIOSPayload(videoId: string) {
   };
 }
 
+function buildTVEmbeddedPayload(videoId: string) {
+  return {
+    videoId,
+    context: {
+      client: {
+        clientName: "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
+        clientVersion: "2.0",
+        hl: "en",
+        gl: "US",
+      },
+      thirdParty: {
+        embedUrl: "https://www.youtube.com/",
+      },
+    },
+    contentCheckOk: true,
+    racyCheckOk: true,
+  };
+}
+
+function buildAndroidEmbeddedPayload(videoId: string) {
+  return {
+    videoId,
+    context: {
+      client: {
+        clientName: "ANDROID_EMBEDDED_PLAYER",
+        clientVersion: "19.13.36",
+        clientScreen: "EMBED",
+        androidSdkVersion: 30,
+        hl: "en",
+        gl: "US",
+      },
+      thirdParty: {
+        embedUrl: "https://www.youtube.com/",
+      },
+    },
+    contentCheckOk: true,
+    racyCheckOk: true,
+  };
+}
+
+function buildWebEmbeddedPayload(videoId: string) {
+  return {
+    videoId,
+    context: {
+      client: {
+        clientName: "WEB_EMBEDDED_PLAYER",
+        clientVersion: "1.20220918",
+        clientScreen: "EMBED",
+        hl: "en",
+        gl: "US",
+      },
+      thirdParty: {
+        embedUrl: "https://www.youtube.com/",
+      },
+    },
+    contentCheckOk: true,
+    racyCheckOk: true,
+  };
+}
+
 // --- Core extraction via Innertube API ---
 
 async function fetchFromInnertube(videoId: string): Promise<any> {
-  // Try ANDROID client first (best format selection, direct URLs)
+  // Try multiple clients in order of preference
+  // ANDROID_EMBEDDED and WEB_EMBEDDED often bypass bot detection
   const clients = [
     {
       name: "ANDROID",
       payload: buildAndroidPayload(videoId),
       ua: ANDROID_USER_AGENT,
+    },
+    {
+      name: "ANDROID_EMBEDDED",
+      payload: buildAndroidEmbeddedPayload(videoId),
+      ua: ANDROID_USER_AGENT,
+    },
+    {
+      name: "WEB_EMBEDDED",
+      payload: buildWebEmbeddedPayload(videoId),
+      ua: WEB_USER_AGENT,
     },
     {
       name: "IOS",
@@ -115,6 +186,51 @@ async function fetchFromInnertube(videoId: string): Promise<any> {
 }
 
 // --- Fallback: extract from watch page HTML ---
+
+async function fetchFromEmbedPage(videoId: string): Promise<any> {
+  // Try the embed page which often bypasses bot detection
+  const url = `https://www.youtube.com/embed/${videoId}`;
+  const resp = await axios.get(url, {
+    headers: {
+      "User-Agent": WEB_USER_AGENT,
+      "Accept-Language": "en-US,en;q=0.9",
+      "Referer": "https://www.youtube.com/",
+    },
+    maxRedirects: 5,
+    timeout: 15000,
+  });
+
+  const html: string = resp.data;
+
+  // Find ytInitialPlayerResponse in embed page
+  const marker = html.match(/ytInitialPlayerResponse\s*=\s*(\{)/);
+  if (!marker || marker.index === undefined) {
+    throw new Error("Could not find ytInitialPlayerResponse in embed page HTML");
+  }
+
+  const startIdx = marker.index + marker[0].length - 1;
+  let depth = 0;
+  let endIdx = startIdx;
+  for (let i = startIdx; i < html.length; i++) {
+    if (html[i] === "{") depth++;
+    else if (html[i] === "}") {
+      depth--;
+      if (depth === 0) {
+        endIdx = i;
+        break;
+      }
+    }
+  }
+
+  const data = JSON.parse(html.substring(startIdx, endIdx + 1));
+
+  if (data.playabilityStatus?.status !== "OK") {
+    const reason = data.playabilityStatus?.reason || data.playabilityStatus?.status;
+    throw new Error(reason || "Video not playable");
+  }
+
+  return data;
+}
 
 async function fetchFromWatchPage(videoId: string): Promise<any> {
   const url = `https://www.youtube.com/watch?v=${videoId}`;
@@ -228,19 +344,26 @@ export async function extractVideoInfo(
   let data: any;
   let backend = "custom";
 
-  // Strategy A: Innertube API (ANDROID/IOS clients — returns direct URLs)
+  // Strategy A: Innertube API (ANDROID/IOS/EMBEDDED clients — returns direct URLs)
   try {
     data = await fetchFromInnertube(videoId);
     backend = "custom";
   } catch (innertubeError) {
-    // Strategy B: Watch page HTML extraction (may have signatureCipher)
-    console.log("Custom extractor: Innertube failed, trying watch page");
+    // Strategy B: Embed page HTML extraction (often bypasses bot detection)
+    console.log("Custom extractor: Innertube failed, trying embed page");
     try {
-      data = await fetchFromWatchPage(videoId);
-      backend = "custom-web";
-    } catch (webError) {
-      // Re-throw the Innertube error as it's more informative
-      throw innertubeError;
+      data = await fetchFromEmbedPage(videoId);
+      backend = "custom-embed";
+    } catch (embedError) {
+      // Strategy C: Watch page HTML extraction (last resort)
+      console.log("Custom extractor: Embed page failed, trying watch page");
+      try {
+        data = await fetchFromWatchPage(videoId);
+        backend = "custom-web";
+      } catch (webError) {
+        // Re-throw the Innertube error as it's most informative
+        throw innertubeError;
+      }
     }
   }
 
