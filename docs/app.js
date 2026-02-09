@@ -7,6 +7,7 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 let currentVideoId = null;
 let currentVideoData = null;
 let searchResults = [];
+let currentSpotifyData = null;
 
 // DOM Elements
 const searchInput = document.getElementById('searchInput');
@@ -34,6 +35,19 @@ const streamBtn = document.getElementById('streamBtn');
 const copyLinkBtn = document.getElementById('copyLinkBtn');
 const downloadInfo = document.getElementById('downloadInfo');
 
+// Spotify Elements
+const spotifyInfoSection = document.getElementById('spotifyInfo');
+const spotifyArt = document.getElementById('spotifyArt');
+const spotifyTitle = document.getElementById('spotifyTitle');
+const spotifyArtist = document.getElementById('spotifyArtist');
+const spotifyDuration = document.getElementById('spotifyDuration');
+const spotifyDownloadBtn = document.getElementById('spotifyDownloadBtn');
+const spotifyPreviewBtn = document.getElementById('spotifyPreviewBtn');
+const spotifyDownloadInfo = document.getElementById('spotifyDownloadInfo');
+const spotifyYoutubeMatch = document.getElementById('spotifyYoutubeMatch');
+const spotifyTrackList = document.getElementById('spotifyTrackList');
+const spotifyTracks = document.getElementById('spotifyTracks');
+
 // Event Listeners
 searchBtn.addEventListener('click', handleSearch);
 searchInput.addEventListener('keypress', (e) => {
@@ -42,6 +56,8 @@ searchInput.addEventListener('keypress', (e) => {
 downloadBtn.addEventListener('click', handleDownload);
 streamBtn.addEventListener('click', handleStream);
 copyLinkBtn.addEventListener('click', handleCopyLink);
+spotifyDownloadBtn.addEventListener('click', handleSpotifyDownload);
+spotifyPreviewBtn.addEventListener('click', handleSpotifyPreview);
 
 // Tab switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -81,12 +97,16 @@ function switchTab(tab) {
     });
 
     // Show/hide sections
+    searchResultsSection.classList.add('hidden');
+    videoInfoSection.classList.add('hidden');
+    spotifyInfoSection.classList.add('hidden');
+
     if (tab === 'search') {
         searchResultsSection.classList.remove('hidden');
-        videoInfoSection.classList.add('hidden');
     } else if (tab === 'video') {
-        searchResultsSection.classList.add('hidden');
         videoInfoSection.classList.remove('hidden');
+    } else if (tab === 'spotify') {
+        spotifyInfoSection.classList.remove('hidden');
     }
 }
 
@@ -104,6 +124,10 @@ function extractVideoId(input) {
         }
     }
     return null;
+}
+
+function isSpotifyUrl(input) {
+    return /^https?:\/\/(open\.)?spotify\.com\/(track|album|playlist)\//.test(input);
 }
 
 function formatDuration(seconds) {
@@ -208,6 +232,14 @@ async function handleSearch() {
     }
 
     hideError();
+
+    // Check if it's a Spotify URL
+    if (isSpotifyUrl(query)) {
+        await loadSpotifyInfo(query);
+        tabs.style.display = 'flex';
+        switchTab('spotify');
+        return;
+    }
 
     // Check if it's a video URL/ID
     const videoId = extractVideoId(query);
@@ -396,6 +428,130 @@ function handleCopyLink() {
     });
 }
 
+// --- Spotify Functions ---
+
+async function loadSpotifyInfo(spotifyUrl) {
+    try {
+        showLoading();
+
+        // Get track info + YouTube match from backend
+        const response = await fetch(`${API_BASE}/spotify/search?url=${encodeURIComponent(spotifyUrl)}`);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to get Spotify track info');
+        }
+
+        const data = await response.json();
+        hideLoading();
+        currentSpotifyData = data;
+
+        // Update UI
+        spotifyArt.src = data.track.image || '';
+        spotifyTitle.textContent = data.track.title;
+        spotifyArtist.textContent = data.track.artist;
+
+        if (data.track.duration) {
+            const durationSec = Math.floor(data.track.duration / 1000);
+            spotifyDuration.textContent = `Duration: ${formatDuration(durationSec)}`;
+        } else {
+            spotifyDuration.textContent = '';
+        }
+
+        // Show YouTube match info
+        if (data.youtubeVideoId) {
+            spotifyYoutubeMatch.classList.remove('hidden');
+            spotifyYoutubeMatch.querySelector('.match-text').textContent =
+                `✅ Found on YouTube: "${data.youtubeVideoTitle}"`;
+            spotifyDownloadBtn.disabled = false;
+        } else {
+            spotifyYoutubeMatch.classList.remove('hidden');
+            spotifyYoutubeMatch.querySelector('.match-text').textContent =
+                '⚠️ Could not find a matching YouTube video for download';
+            spotifyDownloadBtn.disabled = true;
+        }
+
+        // Show/hide preview button based on preview availability
+        if (data.track.previewUrl) {
+            spotifyPreviewBtn.disabled = false;
+        } else {
+            spotifyPreviewBtn.disabled = true;
+        }
+
+        spotifyInfoSection.classList.remove('hidden');
+    } catch (error) {
+        console.error('Spotify info error:', error);
+        showError(error.message || 'Failed to get Spotify track information');
+    }
+}
+
+async function handleSpotifyDownload() {
+    if (!currentSpotifyData || !currentSpotifyData.track) {
+        showError('No Spotify track selected');
+        return;
+    }
+
+    const spotifyUrl = currentSpotifyData.track.spotifyUrl || searchInput.value.trim();
+    const downloadUrl = `${API_BASE}/spotify/download?url=${encodeURIComponent(spotifyUrl)}`;
+
+    spotifyDownloadBtn.disabled = true;
+    spotifyDownloadBtn.innerHTML = '<span class="btn-icon">⏳</span> Downloading...';
+    spotifyDownloadInfo.classList.remove('hidden');
+    spotifyDownloadInfo.querySelector('.info-text').textContent =
+        '⏳ Searching YouTube and preparing audio download... This may take a moment.';
+
+    try {
+        const response = await fetch(downloadUrl);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Download failed (HTTP ${response.status})`);
+        }
+
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `${currentSpotifyData.track.artist} - ${currentSpotifyData.track.title}.m4a`;
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
+            if (match) {
+                filename = match[1];
+            }
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        spotifyDownloadInfo.querySelector('.info-text').textContent =
+            '🎉 Download complete! Check your browser downloads.';
+    } catch (error) {
+        console.error('Spotify download error:', error);
+        spotifyDownloadInfo.querySelector('.info-text').textContent =
+            `❌ Download failed: ${error.message || 'Unknown error'}`;
+    } finally {
+        spotifyDownloadBtn.disabled = false;
+        spotifyDownloadBtn.innerHTML = '<span class="btn-icon">⬇️</span> Download Audio';
+
+        setTimeout(() => {
+            spotifyDownloadInfo.classList.add('hidden');
+        }, 5000);
+    }
+}
+
+function handleSpotifyPreview() {
+    if (!currentSpotifyData || !currentSpotifyData.track || !currentSpotifyData.track.previewUrl) {
+        showError('No preview available for this track');
+        return;
+    }
+
+    window.open(currentSpotifyData.track.previewUrl, '_blank');
+}
+
 // Initialize
-console.log('YouTube Downloader initialized');
+console.log('Media Downloader initialized');
 console.log('API Base:', API_BASE);

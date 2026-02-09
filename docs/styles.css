@@ -504,6 +504,140 @@ body {
     display: none !important;
 }
 
+/* Spotify Styles */
+.spotify-info {
+    margin-bottom: 40px;
+}
+
+.spotify-details {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.spotify-art-container {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.spotify-art {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.spotify-metadata {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+}
+
+.spotify-badge {
+    display: inline-block;
+    background: #1db954;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.spotify-title {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.3;
+}
+
+.spotify-artist-name {
+    font-size: 1.1em;
+    color: #1db954;
+    font-weight: 600;
+}
+
+.spotify-duration {
+    color: #666;
+    font-size: 0.95em;
+}
+
+.spotify-note {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.spotify-youtube-match {
+    padding: 10px 15px;
+    background: #f0f9f4;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+}
+
+.btn-spotify {
+    background: #1db954;
+    color: white;
+}
+
+.btn-spotify:hover {
+    background: #1aa34a;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(29, 185, 84, 0.3);
+}
+
+.spotify-track-list {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.spotify-tracks {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.spotify-track-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 15px;
+    background: white;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.spotify-track-item:hover {
+    background: #f0f0f0;
+}
+
+.spotify-track-num {
+    color: #999;
+    font-size: 0.9em;
+    min-width: 25px;
+}
+
+.spotify-track-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.spotify-track-artist {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.spotify-track-duration {
+    color: #999;
+    font-size: 0.85em;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
@@ -527,6 +661,10 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .spotify-details {
+        grid-template-columns: 1fr;
+    }
+
     .results-grid {
         grid-template-columns: 1fr;
     }
@@ -541,6 +679,10 @@ body {
     }
 
     .video-title {
+        font-size: 1.4em;
+    }
+
+    .spotify-title {
         font-size: 1.4em;
     }
 }
