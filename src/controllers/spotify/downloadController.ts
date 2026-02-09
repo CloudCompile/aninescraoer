@@ -184,6 +184,15 @@ export async function searchTrack(req: Request, res: Response) {
     const artist = preview.artist || "Unknown Artist";
     const title = preview.title || preview.track || "Unknown Track";
 
+    // Get track duration
+    let duration = 0;
+    try {
+      const tracks = await spotifyInfo.getTracks(url);
+      if (tracks && tracks[0]) {
+        duration = tracks[0].duration || 0;
+      }
+    } catch {}
+
     // Search YouTube for the track
     const youtubeResult = await findYouTubeVideo(artist, title);
 
@@ -191,7 +200,7 @@ export async function searchTrack(req: Request, res: Response) {
       track: {
         title,
         artist,
-        duration: 0,
+        duration,
         image: preview.image,
         previewUrl: preview.audio || null,
         spotifyUrl: preview.link,
