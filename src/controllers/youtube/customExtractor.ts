@@ -20,12 +20,34 @@ import type { YouTubeVideoInfo, VideoFormat } from "../../types/youtube/youtube"
 // --- HTTP helpers ---
 
 const INNERTUBE_API_URL = "https://www.youtube.com/youtubei/v1/player";
+const INNERTUBE_API_KEY = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"; // Public API key
 
 const ANDROID_USER_AGENT =
   "com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip";
 
 const WEB_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+const MOBILE_USER_AGENT =
+  "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
+
+// Complete browser headers to look more legitimate
+function getRealisticHeaders(userAgent: string) {
+  return {
+    "User-Agent": userAgent,
+    "Accept": "*/*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Origin": "https://www.youtube.com",
+    "Referer": "https://www.youtube.com/",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
+    "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+  };
+}
 
 // --- Innertube API clients ---
 
@@ -105,6 +127,39 @@ function buildAndroidEmbeddedPayload(videoId: string) {
   };
 }
 
+function buildMWEBPayload(videoId: string) {
+  return {
+    videoId,
+    context: {
+      client: {
+        clientName: "MWEB",
+        clientVersion: "2.20240304.08.00",
+        hl: "en",
+        gl: "US",
+        userAgent: MOBILE_USER_AGENT,
+      },
+    },
+    contentCheckOk: true,
+    racyCheckOk: true,
+  };
+}
+
+function buildTVPayload(videoId: string) {
+  return {
+    videoId,
+    context: {
+      client: {
+        clientName: "TVHTML5",
+        clientVersion: "7.20240304.08.00",
+        hl: "en",
+        gl: "US",
+      },
+    },
+    contentCheckOk: true,
+    racyCheckOk: true,
+  };
+}
+
 function buildWebEmbeddedPayload(videoId: string) {
   return {
     videoId,
@@ -128,28 +183,43 @@ function buildWebEmbeddedPayload(videoId: string) {
 // --- Core extraction via Innertube API ---
 
 async function fetchFromInnertube(videoId: string): Promise<any> {
-  // Try multiple clients in order of preference
-  // ANDROID_EMBEDDED and WEB_EMBEDDED often bypass bot detection
+  // Try multiple clients in order of best bypass potential
   const clients = [
     {
       name: "ANDROID",
       payload: buildAndroidPayload(videoId),
       ua: ANDROID_USER_AGENT,
+      useApiKey: false,
+    },
+    {
+      name: "MWEB",
+      payload: buildMWEBPayload(videoId),
+      ua: MOBILE_USER_AGENT,
+      useApiKey: true,
     },
     {
       name: "ANDROID_EMBEDDED",
       payload: buildAndroidEmbeddedPayload(videoId),
       ua: ANDROID_USER_AGENT,
+      useApiKey: false,
+    },
+    {
+      name: "TV",
+      payload: buildTVPayload(videoId),
+      ua: WEB_USER_AGENT,
+      useApiKey: true,
     },
     {
       name: "WEB_EMBEDDED",
       payload: buildWebEmbeddedPayload(videoId),
       ua: WEB_USER_AGENT,
+      useApiKey: false,
     },
     {
       name: "IOS",
       payload: buildIOSPayload(videoId),
       ua: "com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)",
+      useApiKey: false,
     },
   ];
 
@@ -157,11 +227,16 @@ async function fetchFromInnertube(videoId: string): Promise<any> {
 
   for (const client of clients) {
     try {
-      const resp = await axios.post(INNERTUBE_API_URL, client.payload, {
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": client.ua,
-        },
+      const url = client.useApiKey 
+        ? `${INNERTUBE_API_URL}?key=${INNERTUBE_API_KEY}`
+        : INNERTUBE_API_URL;
+      
+      const headers = client.name === "MWEB" || client.name === "TV"
+        ? { ...getRealisticHeaders(client.ua), "Content-Type": "application/json" }
+        : { "Content-Type": "application/json", "User-Agent": client.ua };
+
+      const resp = await axios.post(url, client.payload, {
+        headers,
         timeout: 15000,
       });
 
@@ -191,11 +266,7 @@ async function fetchFromEmbedPage(videoId: string): Promise<any> {
   // Try the embed page which often bypasses bot detection
   const url = `https://www.youtube.com/embed/${videoId}`;
   const resp = await axios.get(url, {
-    headers: {
-      "User-Agent": WEB_USER_AGENT,
-      "Accept-Language": "en-US,en;q=0.9",
-      "Referer": "https://www.youtube.com/",
-    },
+    headers: getRealisticHeaders(WEB_USER_AGENT),
     maxRedirects: 5,
     timeout: 15000,
   });
@@ -235,10 +306,7 @@ async function fetchFromEmbedPage(videoId: string): Promise<any> {
 async function fetchFromWatchPage(videoId: string): Promise<any> {
   const url = `https://www.youtube.com/watch?v=${videoId}`;
   const resp = await axios.get(url, {
-    headers: {
-      "User-Agent": WEB_USER_AGENT,
-      "Accept-Language": "en-US,en;q=0.9",
-    },
+    headers: getRealisticHeaders(WEB_USER_AGENT),
     maxRedirects: 5,
     timeout: 15000,
   });

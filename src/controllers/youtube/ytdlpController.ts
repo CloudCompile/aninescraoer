@@ -93,10 +93,13 @@ function getCommonArgs(): string[] {
   const args = [
     "--js-runtimes", `node:${nodePath}`,
     "--no-warnings",
+    "--no-check-certificate",
+    "--geo-bypass",
+    "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
   ];
   
-  // Try to bypass bot detection with different player clients
-  args.push("--extractor-args", "youtube:player_client=android,web_embedded,ios");
+  // Try aggressive bot detection bypass with multiple player clients
+  args.push("--extractor-args", "youtube:player_client=android,mweb,tv_embedded,web_embedded,ios;skip=hls,dash");
   
   return args;
 }
