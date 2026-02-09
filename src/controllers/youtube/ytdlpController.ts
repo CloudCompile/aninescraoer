@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import YTDlpWrap from "yt-dlp-wrap";
 import path from "path";
 import fs from "fs";
+import { execSync } from "child_process";
 
 // Find the node binary path for yt-dlp JS runtime
 function findNodePath(): string {
@@ -11,12 +12,40 @@ function findNodePath(): string {
 
 const nodePath = findNodePath();
 
+// Check if Python 3 is available in the environment
+function isPythonAvailable(): boolean {
+  try {
+    // Try to find python3 or python
+    execSync('python3 --version', { stdio: 'ignore' });
+    return true;
+  } catch {
+    try {
+      execSync('python --version', { stdio: 'ignore' });
+      return true;
+    } catch {
+      console.warn("Python not found in environment. yt-dlp will be skipped.");
+      return false;
+    }
+  }
+}
+
 // Initialize yt-dlp wrapper
 let ytDlpWrap: YTDlpWrap | null = null;
 let ytDlpInitialized = false;
 let ytDlpInitializing: Promise<void> | null = null;
+let pythonAvailable: boolean | null = null;
 
 async function initializeYtDlp() {
+  // Check Python availability once
+  if (pythonAvailable === null) {
+    pythonAvailable = isPythonAvailable();
+  }
+  
+  // Skip yt-dlp initialization if Python is not available
+  if (!pythonAvailable) {
+    throw new Error("Python not available - yt-dlp requires Python 3 to run");
+  }
+  
   if (ytDlpInitialized && ytDlpWrap) {
     return ytDlpWrap;
   }
@@ -167,13 +196,19 @@ export async function getVideoInfoYtDlp(req: Request, res: Response) {
     console.error("yt-dlp error fetching video info:", error);
     const errMsg = error instanceof Error ? error.message : String(error);
     const isBotDetected = errMsg.includes("not a bot") || errMsg.includes("Sign in to confirm");
+    const isPythonMissing = errMsg.includes("Python not available") || errMsg.includes("'python3': No such file or directory") || errMsg.includes("python: not found");
+    
     res.status(isBotDetected ? 429 : 500).json({
       error: isBotDetected
         ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
+        : isPythonMissing
+        ? "yt-dlp requires Python 3 which is not available in this environment"
         : "Failed to fetch video information using yt-dlp",
       message: errMsg,
       suggestion: isBotDetected
         ? "Export cookies from your browser using a browser extension and set them as the YOUTUBE_COOKIE environment variable."
+        : isPythonMissing
+        ? "This request requires yt-dlp which needs Python. The server environment doesn't have Python installed."
         : undefined,
     });
   }
@@ -245,11 +280,18 @@ export async function downloadVideoYtDlp(req: Request, res: Response) {
     if (!res.headersSent) {
       const errMsg = error instanceof Error ? error.message : String(error);
       const isBotDetected = errMsg.includes("not a bot") || errMsg.includes("Sign in to confirm");
+      const isPythonMissing = errMsg.includes("Python not available") || errMsg.includes("'python3': No such file or directory") || errMsg.includes("python: not found");
+      
       res.status(isBotDetected ? 429 : 500).json({
         error: isBotDetected
           ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
+          : isPythonMissing
+          ? "yt-dlp requires Python 3 which is not available in this environment"
           : "Failed to download video",
         message: errMsg,
+        suggestion: isPythonMissing 
+          ? "This video download requires yt-dlp which needs Python. The server environment doesn't have Python installed. Try a different video or contact the administrator."
+          : undefined,
       });
     }
   }
@@ -312,11 +354,18 @@ export async function streamVideoYtDlp(req: Request, res: Response) {
     if (!res.headersSent) {
       const errMsg = error instanceof Error ? error.message : String(error);
       const isBotDetected = errMsg.includes("not a bot") || errMsg.includes("Sign in to confirm");
+      const isPythonMissing = errMsg.includes("Python not available") || errMsg.includes("'python3': No such file or directory") || errMsg.includes("python: not found");
+      
       res.status(isBotDetected ? 429 : 500).json({
         error: isBotDetected
           ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
+          : isPythonMissing
+          ? "yt-dlp requires Python 3 which is not available in this environment"
           : "Failed to stream video",
         message: errMsg,
+        suggestion: isPythonMissing 
+          ? "This video streaming requires yt-dlp which needs Python. The server environment doesn't have Python installed. Try a different video or contact the administrator."
+          : undefined,
       });
     }
   }

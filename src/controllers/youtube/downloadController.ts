@@ -115,11 +115,18 @@ export async function downloadVideo(req: Request, res: Response) {
     if (!res.headersSent) {
       const errMsg = error instanceof Error ? error.message : String(error);
       const isBotDetected = errMsg.includes("not a bot") || errMsg.includes("Sign in to confirm");
+      const isPythonMissing = errMsg.includes("Python not available") || errMsg.includes("'python3': No such file or directory") || errMsg.includes("python: not found");
+      
       res.status(isBotDetected ? 429 : 500).json({
         error: isBotDetected
           ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
+          : isPythonMissing
+          ? "Download failed - all available backends exhausted"
           : "Failed to download video",
         message: errMsg,
+        suggestion: isPythonMissing
+          ? "This video requires advanced extraction methods that need Python, which is not available in this environment. The custom extractor and ytdl-core backends also failed."
+          : undefined,
       });
     }
   }
@@ -208,11 +215,18 @@ export async function streamVideo(req: Request, res: Response) {
     if (!res.headersSent) {
       const errMsg = error instanceof Error ? error.message : String(error);
       const isBotDetected = errMsg.includes("not a bot") || errMsg.includes("Sign in to confirm");
+      const isPythonMissing = errMsg.includes("Python not available") || errMsg.includes("'python3': No such file or directory") || errMsg.includes("python: not found");
+      
       res.status(isBotDetected ? 429 : 500).json({
         error: isBotDetected
           ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
+          : isPythonMissing
+          ? "Streaming failed - all available backends exhausted"
           : "Failed to stream video",
         message: errMsg,
+        suggestion: isPythonMissing
+          ? "This video requires advanced extraction methods that need Python, which is not available in this environment. The custom extractor and ytdl-core backends also failed."
+          : undefined,
       });
     }
   }
