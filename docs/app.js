@@ -345,6 +345,10 @@ async function handleDownload() {
         const msg = error.message || 'Unknown error';
         if (msg.includes('bot detection') || msg.includes('429')) {
             downloadInfo.querySelector('.info-text').textContent = '❌ YouTube bot detection active. The server needs YOUTUBE_COOKIE to be configured. Try again later or contact the administrator.';
+        } else if (msg.includes('yt-dlp') && (msg.includes('Python') || msg.includes('not available'))) {
+            downloadInfo.querySelector('.info-text').textContent = '❌ Download failed: This video requires advanced extraction methods that are currently unavailable. Please try a different video.';
+        } else if (msg.includes('backends exhausted') || msg.includes('503')) {
+            downloadInfo.querySelector('.info-text').textContent = '❌ Download unavailable: All download methods failed for this video. Please try a different video or contact support.';
         } else {
             downloadInfo.querySelector('.info-text').textContent = `❌ Download failed: ${msg}`;
         }

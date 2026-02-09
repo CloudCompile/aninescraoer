@@ -43,7 +43,8 @@ async function initializeYtDlp() {
   
   // Skip yt-dlp initialization if Python is not available
   if (!pythonAvailable) {
-    throw new Error("Python not available - yt-dlp requires Python 3 to run");
+    console.log("Skipping yt-dlp initialization - Python not available");
+    return null;
   }
   
   if (ytDlpInitialized && ytDlpWrap) {
@@ -123,7 +124,7 @@ function getFormatSelector(quality?: string, filter?: string): string {
 export async function fetchYtDlpMetadata(videoUrl: string): Promise<any> {
   const ytDlp = await initializeYtDlp();
   if (!ytDlp) {
-    throw new Error("Failed to initialize yt-dlp");
+    throw new Error("Python not available - yt-dlp requires Python 3 to run");
   }
   // Include -f b to avoid yt-dlp-wrap defaulting to -f best (deprecated)
   return ytDlp.getVideoInfo([videoUrl, ...getCommonArgs(), "-f", "b"]);
@@ -148,7 +149,11 @@ export async function getVideoInfoYtDlp(req: Request, res: Response) {
 
     const ytDlp = await initializeYtDlp();
     if (!ytDlp) {
-      throw new Error("Failed to initialize yt-dlp");
+      return res.status(503).json({
+        error: "yt-dlp is not available",
+        message: "Python not available - yt-dlp requires Python 3 to run",
+        suggestion: "This server environment doesn't have Python installed, so yt-dlp cannot be used. Please try using a different backend.",
+      });
     }
 
     // Get video metadata using yt-dlp with JS runtime
@@ -233,7 +238,11 @@ export async function downloadVideoYtDlp(req: Request, res: Response) {
 
     const ytDlp = await initializeYtDlp();
     if (!ytDlp) {
-      throw new Error("Failed to initialize yt-dlp");
+      return res.status(503).json({
+        error: "yt-dlp is not available",
+        message: "Python not available - yt-dlp requires Python 3 to run",
+        suggestion: "This server environment doesn't have Python installed, so yt-dlp cannot be used. The custom extractor and ytdl-core backends are available for most videos.",
+      });
     }
 
     // Get video info first to set filename
@@ -317,7 +326,11 @@ export async function streamVideoYtDlp(req: Request, res: Response) {
 
     const ytDlp = await initializeYtDlp();
     if (!ytDlp) {
-      throw new Error("Failed to initialize yt-dlp");
+      return res.status(503).json({
+        error: "yt-dlp is not available",
+        message: "Python not available - yt-dlp requires Python 3 to run",
+        suggestion: "This server environment doesn't have Python installed, so yt-dlp cannot be used. The custom extractor and ytdl-core backends are available for most videos.",
+      });
     }
 
     const qualityStr = typeof quality === "string" ? quality : undefined;
