@@ -7,6 +7,8 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 let currentVideoId = null;
 let currentVideoData = null;
 let searchResults = [];
+let currentSpotifyData = null;
+let crunchyrollData = null;
 
 // DOM Elements
 const searchInput = document.getElementById('searchInput');
@@ -34,6 +36,24 @@ const streamBtn = document.getElementById('streamBtn');
 const copyLinkBtn = document.getElementById('copyLinkBtn');
 const downloadInfo = document.getElementById('downloadInfo');
 
+// Spotify Elements
+const spotifyInfoSection = document.getElementById('spotifyInfo');
+const spotifyArt = document.getElementById('spotifyArt');
+const spotifyTitle = document.getElementById('spotifyTitle');
+const spotifyArtist = document.getElementById('spotifyArtist');
+const spotifyDuration = document.getElementById('spotifyDuration');
+const spotifyDownloadBtn = document.getElementById('spotifyDownloadBtn');
+const spotifyPreviewBtn = document.getElementById('spotifyPreviewBtn');
+const spotifyDownloadInfo = document.getElementById('spotifyDownloadInfo');
+const spotifyYoutubeMatch = document.getElementById('spotifyYoutubeMatch');
+const spotifyTrackList = document.getElementById('spotifyTrackList');
+const spotifyTracks = document.getElementById('spotifyTracks');
+
+// Crunchyroll Elements
+const crunchyrollInfoSection = document.getElementById('crunchyrollInfo');
+const crunchyrollTitle = document.getElementById('crunchyrollTitle');
+const crunchyrollGrid = document.getElementById('crunchyrollGrid');
+
 // Event Listeners
 searchBtn.addEventListener('click', handleSearch);
 searchInput.addEventListener('keypress', (e) => {
@@ -42,6 +62,8 @@ searchInput.addEventListener('keypress', (e) => {
 downloadBtn.addEventListener('click', handleDownload);
 streamBtn.addEventListener('click', handleStream);
 copyLinkBtn.addEventListener('click', handleCopyLink);
+spotifyDownloadBtn.addEventListener('click', handleSpotifyDownload);
+spotifyPreviewBtn.addEventListener('click', handleSpotifyPreview);
 
 // Tab switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -81,12 +103,19 @@ function switchTab(tab) {
     });
 
     // Show/hide sections
+    searchResultsSection.classList.add('hidden');
+    videoInfoSection.classList.add('hidden');
+    spotifyInfoSection.classList.add('hidden');
+    crunchyrollInfoSection.classList.add('hidden');
+
     if (tab === 'search') {
         searchResultsSection.classList.remove('hidden');
-        videoInfoSection.classList.add('hidden');
     } else if (tab === 'video') {
-        searchResultsSection.classList.add('hidden');
         videoInfoSection.classList.remove('hidden');
+    } else if (tab === 'spotify') {
+        spotifyInfoSection.classList.remove('hidden');
+    } else if (tab === 'crunchyroll') {
+        crunchyrollInfoSection.classList.remove('hidden');
     }
 }
 
@@ -104,6 +133,21 @@ function extractVideoId(input) {
         }
     }
     return null;
+}
+
+function isSpotifyUrl(input) {
+    return /^https?:\/\/(open\.)?spotify\.com\/(track|album|playlist)\//.test(input);
+}
+
+function isCrunchyrollQuery(input) {
+    return input.toLowerCase().startsWith('cr:') || /^https?:\/\/(www\.)?crunchyroll\.com\//.test(input);
+}
+
+function getCrunchyrollSearchTerm(input) {
+    if (input.toLowerCase().startsWith('cr:')) {
+        return input.substring(3).trim();
+    }
+    return '';
 }
 
 function formatDuration(seconds) {
@@ -208,6 +252,27 @@ async function handleSearch() {
     }
 
     hideError();
+
+    // Check if it's a Spotify URL
+    if (isSpotifyUrl(query)) {
+        await loadSpotifyInfo(query);
+        tabs.style.display = 'flex';
+        switchTab('spotify');
+        return;
+    }
+
+    // Check if it's a Crunchyroll query
+    if (isCrunchyrollQuery(query)) {
+        const searchTerm = getCrunchyrollSearchTerm(query);
+        if (searchTerm) {
+            await searchCrunchyroll(searchTerm);
+        } else {
+            await loadCrunchyrollFeed();
+        }
+        tabs.style.display = 'flex';
+        switchTab('crunchyroll');
+        return;
+    }
 
     // Check if it's a video URL/ID
     const videoId = extractVideoId(query);
@@ -396,6 +461,246 @@ function handleCopyLink() {
     });
 }
 
+// --- Spotify Functions ---
+
+async function loadSpotifyInfo(spotifyUrl) {
+    try {
+        showLoading();
+
+        // Get track info + YouTube match from backend
+        const response = await fetch(`${API_BASE}/spotify/search?url=${encodeURIComponent(spotifyUrl)}`);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to get Spotify track info');
+        }
+
+        const data = await response.json();
+        hideLoading();
+        currentSpotifyData = data;
+
+        // Update UI
+        spotifyArt.src = data.track.image || '';
+        spotifyTitle.textContent = data.track.title;
+        spotifyArtist.textContent = data.track.artist;
+
+        if (data.track.duration) {
+            const durationSec = Math.floor(data.track.duration / 1000);
+            spotifyDuration.textContent = `Duration: ${formatDuration(durationSec)}`;
+        } else {
+            spotifyDuration.textContent = '';
+        }
+
+        // Show YouTube match info
+        if (data.youtubeVideoId) {
+            spotifyYoutubeMatch.classList.remove('hidden');
+            spotifyYoutubeMatch.querySelector('.match-text').textContent =
+                `✅ Found on YouTube: "${data.youtubeVideoTitle}"`;
+            spotifyDownloadBtn.disabled = false;
+        } else {
+            spotifyYoutubeMatch.classList.remove('hidden');
+            spotifyYoutubeMatch.querySelector('.match-text').textContent =
+                '⚠️ Could not find a matching YouTube video for download';
+            spotifyDownloadBtn.disabled = true;
+        }
+
+        // Show/hide preview button based on preview availability
+        if (data.track.previewUrl) {
+            spotifyPreviewBtn.disabled = false;
+        } else {
+            spotifyPreviewBtn.disabled = true;
+        }
+
+        spotifyInfoSection.classList.remove('hidden');
+    } catch (error) {
+        console.error('Spotify info error:', error);
+        showError(error.message || 'Failed to get Spotify track information');
+    }
+}
+
+async function handleSpotifyDownload() {
+    if (!currentSpotifyData || !currentSpotifyData.track) {
+        showError('No Spotify track selected');
+        return;
+    }
+
+    const spotifyUrl = currentSpotifyData.track.spotifyUrl || searchInput.value.trim();
+    const downloadUrl = `${API_BASE}/spotify/download?url=${encodeURIComponent(spotifyUrl)}`;
+
+    spotifyDownloadBtn.disabled = true;
+    spotifyDownloadBtn.innerHTML = '<span class="btn-icon">⏳</span> Downloading...';
+    spotifyDownloadInfo.classList.remove('hidden');
+    spotifyDownloadInfo.querySelector('.info-text').textContent =
+        '⏳ Searching YouTube and preparing audio download... This may take a moment.';
+
+    try {
+        const response = await fetch(downloadUrl);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Download failed (HTTP ${response.status})`);
+        }
+
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `${currentSpotifyData.track.artist} - ${currentSpotifyData.track.title}.m4a`;
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
+            if (match) {
+                filename = match[1];
+            }
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        spotifyDownloadInfo.querySelector('.info-text').textContent =
+            '🎉 Download complete! Check your browser downloads.';
+    } catch (error) {
+        console.error('Spotify download error:', error);
+        spotifyDownloadInfo.querySelector('.info-text').textContent =
+            `❌ Download failed: ${error.message || 'Unknown error'}`;
+    } finally {
+        spotifyDownloadBtn.disabled = false;
+        spotifyDownloadBtn.innerHTML = '<span class="btn-icon">⬇️</span> Download Audio';
+
+        setTimeout(() => {
+            spotifyDownloadInfo.classList.add('hidden');
+        }, 5000);
+    }
+}
+
+function handleSpotifyPreview() {
+    if (!currentSpotifyData || !currentSpotifyData.track || !currentSpotifyData.track.previewUrl) {
+        showError('No preview available for this track');
+        return;
+    }
+
+    window.open(currentSpotifyData.track.previewUrl, '_blank');
+}
+
+// --- Crunchyroll Functions ---
+
+async function loadCrunchyrollFeed() {
+    try {
+        showLoading();
+        const response = await fetch(`${API_BASE}/crunchyroll/feed?limit=24`);
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch Crunchyroll feed');
+        }
+
+        const data = await response.json();
+        hideLoading();
+        crunchyrollData = data;
+
+        crunchyrollTitle.textContent = 'Latest Anime Episodes';
+        displayCrunchyrollEpisodes(data.episodes);
+        crunchyrollInfoSection.classList.remove('hidden');
+    } catch (error) {
+        console.error('Crunchyroll feed error:', error);
+        showError(error.message || 'Failed to load Crunchyroll feed');
+    }
+}
+
+async function searchCrunchyroll(query) {
+    try {
+        showLoading();
+        const response = await fetch(`${API_BASE}/crunchyroll/search?q=${encodeURIComponent(query)}`);
+
+        if (!response.ok) {
+            throw new Error('Failed to search Crunchyroll');
+        }
+
+        const data = await response.json();
+        hideLoading();
+        crunchyrollData = data;
+
+        crunchyrollTitle.textContent = `Results for "${query}"`;
+
+        if (data.series && data.series.length > 0) {
+            displayCrunchyrollSeries(data.series);
+        } else {
+            crunchyrollGrid.innerHTML = '<p style="text-align: center; padding: 40px; color: #999;">No results found. Try "cr:" followed by an anime title (e.g., "cr:naruto").</p>';
+        }
+        crunchyrollInfoSection.classList.remove('hidden');
+    } catch (error) {
+        console.error('Crunchyroll search error:', error);
+        showError(error.message || 'Failed to search Crunchyroll');
+    }
+}
+
+function displayCrunchyrollEpisodes(episodes) {
+    crunchyrollGrid.innerHTML = '';
+
+    if (!episodes || episodes.length === 0) {
+        crunchyrollGrid.innerHTML = '<p style="text-align: center; padding: 40px; color: #999;">No episodes found.</p>';
+        return;
+    }
+
+    episodes.forEach(ep => {
+        const card = document.createElement('div');
+        card.className = 'cr-card';
+        card.onclick = () => window.open(ep.link, '_blank');
+
+        const timeAgo = formatDate(ep.pubDate);
+
+        card.innerHTML = `
+            <div class="cr-card-img-container">
+                <img src="${ep.thumbnail}" alt="${ep.title}" class="cr-card-img">
+                ${ep.episodeNumber ? `<span class="cr-ep-badge">EP ${ep.episodeNumber}</span>` : ''}
+            </div>
+            <div class="cr-card-body">
+                <div class="cr-card-series">${ep.seriesTitle}</div>
+                <div class="cr-card-title">${ep.episodeTitle || ep.title}</div>
+                <div class="cr-card-meta">${timeAgo}</div>
+            </div>
+        `;
+
+        crunchyrollGrid.appendChild(card);
+    });
+}
+
+function displayCrunchyrollSeries(seriesList) {
+    crunchyrollGrid.innerHTML = '';
+
+    seriesList.forEach(series => {
+        const card = document.createElement('div');
+        card.className = 'cr-series-card';
+
+        let episodesHtml = '';
+        series.episodes.slice(0, 5).forEach(ep => {
+            episodesHtml += `
+                <a href="${ep.link}" target="_blank" class="cr-episode-link">
+                    <span class="cr-episode-num">EP ${ep.episodeNumber || '?'}</span>
+                    <span class="cr-episode-title">${ep.episodeTitle || ep.title}</span>
+                </a>
+            `;
+        });
+
+        card.innerHTML = `
+            <div class="cr-series-header">
+                <img src="${series.thumbnail}" alt="${series.title}" class="cr-series-thumb">
+                <div class="cr-series-info">
+                    <h3 class="cr-series-title">${series.title}</h3>
+                    <span class="cr-series-count">${series.episodeCount} episode${series.episodeCount !== 1 ? 's' : ''}</span>
+                </div>
+            </div>
+            <div class="cr-episodes-list">
+                ${episodesHtml}
+            </div>
+        `;
+
+        crunchyrollGrid.appendChild(card);
+    });
+}
+
 // Initialize
-console.log('YouTube Downloader initialized');
+console.log('Media Downloader initialized');
 console.log('API Base:', API_BASE);
