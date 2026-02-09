@@ -4,6 +4,10 @@ import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
 
+// Error messages
+const PYTHON_NOT_AVAILABLE_ERROR = "Python not available - yt-dlp requires Python 3 to run";
+const YTDLP_NOT_AVAILABLE_MESSAGE = "This server environment doesn't have Python installed, so yt-dlp cannot be used. The custom extractor and ytdl-core backends are available for most videos.";
+
 // Find the node binary path for yt-dlp JS runtime
 function findNodePath(): string {
   // Use process.execPath for cross-platform compatibility
@@ -124,7 +128,7 @@ function getFormatSelector(quality?: string, filter?: string): string {
 export async function fetchYtDlpMetadata(videoUrl: string): Promise<any> {
   const ytDlp = await initializeYtDlp();
   if (!ytDlp) {
-    throw new Error("Python not available - yt-dlp requires Python 3 to run");
+    throw new Error(PYTHON_NOT_AVAILABLE_ERROR);
   }
   // Include -f b to avoid yt-dlp-wrap defaulting to -f best (deprecated)
   return ytDlp.getVideoInfo([videoUrl, ...getCommonArgs(), "-f", "b"]);
@@ -151,7 +155,7 @@ export async function getVideoInfoYtDlp(req: Request, res: Response) {
     if (!ytDlp) {
       return res.status(503).json({
         error: "yt-dlp is not available",
-        message: "Python not available - yt-dlp requires Python 3 to run",
+        message: PYTHON_NOT_AVAILABLE_ERROR,
         suggestion: "This server environment doesn't have Python installed, so yt-dlp cannot be used. Please try using a different backend.",
       });
     }
@@ -240,8 +244,8 @@ export async function downloadVideoYtDlp(req: Request, res: Response) {
     if (!ytDlp) {
       return res.status(503).json({
         error: "yt-dlp is not available",
-        message: "Python not available - yt-dlp requires Python 3 to run",
-        suggestion: "This server environment doesn't have Python installed, so yt-dlp cannot be used. The custom extractor and ytdl-core backends are available for most videos.",
+        message: PYTHON_NOT_AVAILABLE_ERROR,
+        suggestion: YTDLP_NOT_AVAILABLE_MESSAGE,
       });
     }
 
@@ -328,8 +332,8 @@ export async function streamVideoYtDlp(req: Request, res: Response) {
     if (!ytDlp) {
       return res.status(503).json({
         error: "yt-dlp is not available",
-        message: "Python not available - yt-dlp requires Python 3 to run",
-        suggestion: "This server environment doesn't have Python installed, so yt-dlp cannot be used. The custom extractor and ytdl-core backends are available for most videos.",
+        message: PYTHON_NOT_AVAILABLE_ERROR,
+        suggestion: YTDLP_NOT_AVAILABLE_MESSAGE,
       });
     }
 
