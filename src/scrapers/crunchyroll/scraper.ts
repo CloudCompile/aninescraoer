@@ -149,6 +149,8 @@ export async function searchEpisodes(
 
 /**
  * Fetch episodes filtered by genre from Crunchyroll RSS.
+ * Crunchyroll's RSS feed supports a ?genre= query parameter for filtering
+ * (e.g., action, drama, comedy). Falls back to the full feed if unsupported.
  */
 export async function fetchByGenre(
   genre: string,

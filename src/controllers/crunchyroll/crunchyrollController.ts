@@ -35,7 +35,7 @@ export async function search(req: Request, res: Response) {
   try {
     const query = req.query.q as string;
 
-    if (!query || typeof query !== "string") {
+    if (!query || query.trim().length === 0) {
       return res.status(400).json({
         error: "Please provide a search query via the 'q' parameter",
       });
@@ -64,7 +64,7 @@ export async function getByGenre(req: Request, res: Response) {
       ? parseInt(req.query.limit as string, 10)
       : 20;
 
-    if (!genre || typeof genre !== "string") {
+    if (!genre || genre.trim().length === 0) {
       return res.status(400).json({
         error: "Please provide a genre name via the 'name' parameter",
       });
