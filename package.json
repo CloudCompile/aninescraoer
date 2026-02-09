@@ -32,7 +32,6 @@
     "express-rate-limit": "^7.1.5",
     "http-errors": "^2.0.0",
     "node-cache": "^5.1.2",
-    "spotify-url-info": "^3.2.18",
     "youtube-ext": "^1.1.25",
     "yt-dlp-wrap": "^2.3.12",
     "ytpl": "^2.3.0",
