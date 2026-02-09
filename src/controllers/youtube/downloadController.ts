@@ -2,10 +2,13 @@ import { Request, Response } from "express";
 import ytdl from "@distube/ytdl-core";
 import { downloadVideoYtDlp, streamVideoYtDlp } from "./ytdlpController";
 import { extractVideoInfo, selectFormat, proxyVideoStream } from "./customExtractor";
+import { youtubeCookieManager } from "../../utils/cookieManager";
 
-// Create ytdl agent with cookies if provided for better access to restricted videos
-const agent = process.env.YOUTUBE_COOKIE 
-  ? ytdl.createAgent(
+// Get agent with cookies - either from env or dynamically fetched
+async function getAgent() {
+  // Priority 1: Use environment variable if set
+  if (process.env.YOUTUBE_COOKIE) {
+    return ytdl.createAgent(
       process.env.YOUTUBE_COOKIE.split(';').map(cookie => {
         const [name, ...valueParts] = cookie.trim().split('=');
         return {
@@ -14,8 +17,23 @@ const agent = process.env.YOUTUBE_COOKIE
           domain: '.youtube.com'
         };
       })
-    )
-  : undefined;
+    );
+  }
+  
+  // Priority 2: Try to fetch cookies dynamically
+  try {
+    const cookies = await youtubeCookieManager.getCookies();
+    if (cookies.length > 0) {
+      console.log(`Using ${cookies.length} dynamically fetched cookies`);
+      return ytdl.createAgent(cookies);
+    }
+  } catch (error) {
+    console.error("Failed to get dynamic cookies:", error instanceof Error ? error.message : error);
+  }
+  
+  // Priority 3: No cookies
+  return undefined;
+}
 
 export async function downloadVideo(req: Request, res: Response) {
   try {
@@ -73,6 +91,9 @@ export async function downloadVideo(req: Request, res: Response) {
 
     // Strategy 2: Try @distube/ytdl-core
     try {
+      // Get agent with cookies (env or dynamic)
+      const agent = await getAgent();
+      
       // Get basic info with agent if cookies are provided
       const infoOptions = agent ? { agent } : {};
       const info = await ytdl.getBasicInfo(videoUrl, infoOptions);
@@ -179,6 +200,9 @@ export async function streamVideo(req: Request, res: Response) {
 
     // Strategy 2: Try @distube/ytdl-core
     try {
+      // Get agent with cookies (env or dynamic)
+      const agent = await getAgent();
+      
       // Set headers for streaming
       res.setHeader("Content-Type", "video/mp4");
 

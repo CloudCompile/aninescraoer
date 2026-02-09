@@ -3,6 +3,7 @@ import YTDlpWrap from "yt-dlp-wrap";
 import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
+import { youtubeCookieManager } from "../../utils/cookieManager";
 
 // Error messages
 const PYTHON_NOT_AVAILABLE_MESSAGE = "Python not available - yt-dlp requires Python 3 to run";
@@ -89,7 +90,7 @@ async function initializeYtDlp() {
 }
 
 // Common yt-dlp flags for all commands
-function getCommonArgs(): string[] {
+async function getCommonArgs(): Promise<string[]> {
   const args = [
     "--js-runtimes", `node:${nodePath}`,
     "--no-warnings",
@@ -100,6 +101,23 @@ function getCommonArgs(): string[] {
   
   // Try aggressive bot detection bypass with multiple player clients
   args.push("--extractor-args", "youtube:player_client=android,mweb,tv_embedded,web_embedded,ios;skip=hls,dash");
+  
+  // Add dynamic cookies if available
+  try {
+    if (!process.env.YOUTUBE_COOKIE && youtubeCookieManager.hasCookies()) {
+      const cookieString = await youtubeCookieManager.getCookieStringAsync();
+      if (cookieString) {
+        // Write cookies to temp file for yt-dlp
+        const cookieFile = path.join(process.cwd(), '.yt-dlp-cookies.txt');
+        const netscapeCookies = youtubeCookieManager.getNetscapeCookies();
+        fs.writeFileSync(cookieFile, netscapeCookies);
+        args.push("--cookies", cookieFile);
+        console.log("Using dynamic cookies for yt-dlp");
+      }
+    }
+  } catch (error) {
+    console.error("Failed to add dynamic cookies to yt-dlp:", error instanceof Error ? error.message : error);
+  }
   
   return args;
 }
@@ -139,7 +157,8 @@ export async function fetchYtDlpMetadata(videoUrl: string): Promise<any> {
     throw new Error(PYTHON_NOT_AVAILABLE_MESSAGE);
   }
   // Include -f b to avoid yt-dlp-wrap defaulting to -f best (deprecated)
-  return ytDlp.getVideoInfo([videoUrl, ...getCommonArgs(), "-f", "b"]);
+  const args = await getCommonArgs();
+  return ytDlp.getVideoInfo([videoUrl, ...args, "-f", "b"]);
 }
 
 export async function getVideoInfoYtDlp(req: Request, res: Response) {
@@ -170,7 +189,8 @@ export async function getVideoInfoYtDlp(req: Request, res: Response) {
 
     // Get video metadata using yt-dlp with JS runtime
     // Include -f b to avoid yt-dlp-wrap defaulting to -f best (deprecated)
-    const metadata = await ytDlp.getVideoInfo([videoUrl, ...getCommonArgs(), "-f", "b"]);
+    const args = await getCommonArgs();
+    const metadata = await ytDlp.getVideoInfo([videoUrl, ...args, "-f", "b"]);
 
     // Transform yt-dlp metadata to match our API format
     const videoInfo = {
@@ -263,7 +283,8 @@ export async function downloadVideoYtDlp(req: Request, res: Response, isFallback
     }
 
     // Get video info first to set filename
-    const metadata = await ytDlp.getVideoInfo([videoUrl, ...getCommonArgs(), "-f", "b"]);
+    const commonArgs = await getCommonArgs();
+    const metadata = await ytDlp.getVideoInfo([videoUrl, ...commonArgs, "-f", "b"]);
     const title = (metadata.title || "video").replace(/[^\w\s-]/g, "");
 
     const qualityStr = typeof quality === "string" ? quality : undefined;
@@ -281,7 +302,7 @@ export async function downloadVideoYtDlp(req: Request, res: Response, isFallback
     }
 
     // Build yt-dlp arguments
-    const args: string[] = [videoUrl, ...getCommonArgs(), "-f", formatSelector, "-o", "-"];
+    const args: string[] = [videoUrl, ...commonArgs, "-f", formatSelector, "-o", "-"];
     
     // For merged formats, use --merge-output-format mp4
     if (!isAudio && formatSelector.includes("+")) {
@@ -364,7 +385,8 @@ export async function streamVideoYtDlp(req: Request, res: Response, isFallback: 
     res.setHeader("Content-Type", isAudio ? "audio/mp4" : "video/mp4");
 
     // Build yt-dlp arguments
-    const args: string[] = [videoUrl, ...getCommonArgs(), "-f", formatSelector, "-o", "-"];
+    const commonArgs = await getCommonArgs();
+    const args: string[] = [videoUrl, ...commonArgs, "-f", formatSelector, "-o", "-"];
     
     // For merged formats, use --merge-output-format mp4
     if (!isAudio && formatSelector.includes("+")) {
