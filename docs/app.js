@@ -8,6 +8,7 @@ let currentVideoId = null;
 let currentVideoData = null;
 let searchResults = [];
 let currentSpotifyData = null;
+let crunchyrollData = null;
 
 // DOM Elements
 const searchInput = document.getElementById('searchInput');
@@ -47,6 +48,11 @@ const spotifyDownloadInfo = document.getElementById('spotifyDownloadInfo');
 const spotifyYoutubeMatch = document.getElementById('spotifyYoutubeMatch');
 const spotifyTrackList = document.getElementById('spotifyTrackList');
 const spotifyTracks = document.getElementById('spotifyTracks');
+
+// Crunchyroll Elements
+const crunchyrollInfoSection = document.getElementById('crunchyrollInfo');
+const crunchyrollTitle = document.getElementById('crunchyrollTitle');
+const crunchyrollGrid = document.getElementById('crunchyrollGrid');
 
 // Event Listeners
 searchBtn.addEventListener('click', handleSearch);
@@ -100,6 +106,7 @@ function switchTab(tab) {
     searchResultsSection.classList.add('hidden');
     videoInfoSection.classList.add('hidden');
     spotifyInfoSection.classList.add('hidden');
+    crunchyrollInfoSection.classList.add('hidden');
 
     if (tab === 'search') {
         searchResultsSection.classList.remove('hidden');
@@ -107,6 +114,8 @@ function switchTab(tab) {
         videoInfoSection.classList.remove('hidden');
     } else if (tab === 'spotify') {
         spotifyInfoSection.classList.remove('hidden');
+    } else if (tab === 'crunchyroll') {
+        crunchyrollInfoSection.classList.remove('hidden');
     }
 }
 
@@ -128,6 +137,17 @@ function extractVideoId(input) {
 
 function isSpotifyUrl(input) {
     return /^https?:\/\/(open\.)?spotify\.com\/(track|album|playlist)\//.test(input);
+}
+
+function isCrunchyrollQuery(input) {
+    return input.toLowerCase().startsWith('cr:') || /^https?:\/\/(www\.)?crunchyroll\.com\//.test(input);
+}
+
+function getCrunchyrollSearchTerm(input) {
+    if (input.toLowerCase().startsWith('cr:')) {
+        return input.substring(3).trim();
+    }
+    return '';
 }
 
 function formatDuration(seconds) {
@@ -238,6 +258,19 @@ async function handleSearch() {
         await loadSpotifyInfo(query);
         tabs.style.display = 'flex';
         switchTab('spotify');
+        return;
+    }
+
+    // Check if it's a Crunchyroll query
+    if (isCrunchyrollQuery(query)) {
+        const searchTerm = getCrunchyrollSearchTerm(query);
+        if (searchTerm) {
+            await searchCrunchyroll(searchTerm);
+        } else {
+            await loadCrunchyrollFeed();
+        }
+        tabs.style.display = 'flex';
+        switchTab('crunchyroll');
         return;
     }
 
@@ -550,6 +583,122 @@ function handleSpotifyPreview() {
     }
 
     window.open(currentSpotifyData.track.previewUrl, '_blank');
+}
+
+// --- Crunchyroll Functions ---
+
+async function loadCrunchyrollFeed() {
+    try {
+        showLoading();
+        const response = await fetch(`${API_BASE}/crunchyroll/feed?limit=24`);
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch Crunchyroll feed');
+        }
+
+        const data = await response.json();
+        hideLoading();
+        crunchyrollData = data;
+
+        crunchyrollTitle.textContent = 'Latest Anime Episodes';
+        displayCrunchyrollEpisodes(data.episodes);
+        crunchyrollInfoSection.classList.remove('hidden');
+    } catch (error) {
+        console.error('Crunchyroll feed error:', error);
+        showError(error.message || 'Failed to load Crunchyroll feed');
+    }
+}
+
+async function searchCrunchyroll(query) {
+    try {
+        showLoading();
+        const response = await fetch(`${API_BASE}/crunchyroll/search?q=${encodeURIComponent(query)}`);
+
+        if (!response.ok) {
+            throw new Error('Failed to search Crunchyroll');
+        }
+
+        const data = await response.json();
+        hideLoading();
+        crunchyrollData = data;
+
+        crunchyrollTitle.textContent = `Results for "${query}"`;
+
+        if (data.series && data.series.length > 0) {
+            displayCrunchyrollSeries(data.series);
+        } else {
+            crunchyrollGrid.innerHTML = '<p style="text-align: center; padding: 40px; color: #999;">No results found. Try "cr:" followed by an anime title (e.g., "cr:naruto").</p>';
+        }
+        crunchyrollInfoSection.classList.remove('hidden');
+    } catch (error) {
+        console.error('Crunchyroll search error:', error);
+        showError(error.message || 'Failed to search Crunchyroll');
+    }
+}
+
+function displayCrunchyrollEpisodes(episodes) {
+    crunchyrollGrid.innerHTML = '';
+
+    if (!episodes || episodes.length === 0) {
+        crunchyrollGrid.innerHTML = '<p style="text-align: center; padding: 40px; color: #999;">No episodes found.</p>';
+        return;
+    }
+
+    episodes.forEach(ep => {
+        const card = document.createElement('div');
+        card.className = 'cr-card';
+        card.onclick = () => window.open(ep.link, '_blank');
+
+        const timeAgo = formatDate(ep.pubDate);
+
+        card.innerHTML = `
+            <div class="cr-card-img-container">
+                <img src="${ep.thumbnail}" alt="${ep.title}" class="cr-card-img">
+                ${ep.episodeNumber ? `<span class="cr-ep-badge">EP ${ep.episodeNumber}</span>` : ''}
+            </div>
+            <div class="cr-card-body">
+                <div class="cr-card-series">${ep.seriesTitle}</div>
+                <div class="cr-card-title">${ep.episodeTitle || ep.title}</div>
+                <div class="cr-card-meta">${timeAgo}</div>
+            </div>
+        `;
+
+        crunchyrollGrid.appendChild(card);
+    });
+}
+
+function displayCrunchyrollSeries(seriesList) {
+    crunchyrollGrid.innerHTML = '';
+
+    seriesList.forEach(series => {
+        const card = document.createElement('div');
+        card.className = 'cr-series-card';
+
+        let episodesHtml = '';
+        series.episodes.slice(0, 5).forEach(ep => {
+            episodesHtml += `
+                <a href="${ep.link}" target="_blank" class="cr-episode-link">
+                    <span class="cr-episode-num">EP ${ep.episodeNumber || '?'}</span>
+                    <span class="cr-episode-title">${ep.episodeTitle || ep.title}</span>
+                </a>
+            `;
+        });
+
+        card.innerHTML = `
+            <div class="cr-series-header">
+                <img src="${series.thumbnail}" alt="${series.title}" class="cr-series-thumb">
+                <div class="cr-series-info">
+                    <h3 class="cr-series-title">${series.title}</h3>
+                    <span class="cr-series-count">${series.episodeCount} episode${series.episodeCount !== 1 ? 's' : ''}</span>
+                </div>
+            </div>
+            <div class="cr-episodes-list">
+                ${episodesHtml}
+            </div>
+        `;
+
+        crunchyrollGrid.appendChild(card);
+    });
 }
 
 // Initialize
