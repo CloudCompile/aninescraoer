@@ -97,7 +97,7 @@ export async function downloadVideo(req: Request, res: Response) {
       stream.on("error", (error) => {
         console.error("ytdl-core download stream error, falling back to yt-dlp:", error);
         if (!res.headersSent) {
-          return downloadVideoYtDlp(req, res);
+          return downloadVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
         } else {
           console.warn("Cannot fall back to yt-dlp: response headers already sent");
           res.end();
@@ -108,7 +108,7 @@ export async function downloadVideo(req: Request, res: Response) {
     } catch (ytdlError) {
       console.error("@distube/ytdl-core download error:", ytdlError);
       console.log("Falling back to yt-dlp for download");
-      return downloadVideoYtDlp(req, res);
+      return downloadVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
     }
   } catch (error) {
     console.error("Error downloading video:", error);
@@ -121,11 +121,11 @@ export async function downloadVideo(req: Request, res: Response) {
         error: isBotDetected
           ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
           : isPythonMissing
-          ? "Download failed - all available backends exhausted"
+          ? "All available download backends failed"
           : "Failed to download video",
         message: errMsg,
         suggestion: isPythonMissing
-          ? "This video requires advanced extraction methods that need Python, which is not available in this environment. The custom extractor and ytdl-core backends also failed."
+          ? "All download methods (custom extractor, ytdl-core, and yt-dlp) were tried but failed. The server environment does not have Python installed for yt-dlp. Please try a different video or contact the administrator."
           : undefined,
       });
     }
@@ -197,7 +197,7 @@ export async function streamVideo(req: Request, res: Response) {
       stream.on("error", (error) => {
         console.error("ytdl-core stream error, falling back to yt-dlp:", error);
         if (!res.headersSent) {
-          return streamVideoYtDlp(req, res);
+          return streamVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
         } else {
           console.warn("Cannot fall back to yt-dlp: response headers already sent");
           res.end();
@@ -208,7 +208,7 @@ export async function streamVideo(req: Request, res: Response) {
     } catch (ytdlError) {
       console.error("@distube/ytdl-core stream error:", ytdlError);
       console.log("Falling back to yt-dlp for streaming");
-      return streamVideoYtDlp(req, res);
+      return streamVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
     }
   } catch (error) {
     console.error("Error streaming video:", error);
@@ -221,11 +221,11 @@ export async function streamVideo(req: Request, res: Response) {
         error: isBotDetected
           ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
           : isPythonMissing
-          ? "Streaming failed - all available backends exhausted"
+          ? "All available streaming backends failed"
           : "Failed to stream video",
         message: errMsg,
         suggestion: isPythonMissing
-          ? "This video requires advanced extraction methods that need Python, which is not available in this environment. The custom extractor and ytdl-core backends also failed."
+          ? "All streaming methods (custom extractor, ytdl-core, and yt-dlp) were tried but failed. The server environment does not have Python installed for yt-dlp. Please try a different video or contact the administrator."
           : undefined,
       });
     }

@@ -223,7 +223,7 @@ export async function getVideoInfoYtDlp(req: Request, res: Response) {
   }
 }
 
-export async function downloadVideoYtDlp(req: Request, res: Response) {
+export async function downloadVideoYtDlp(req: Request, res: Response, isFallback: boolean = false) {
   try {
     const { videoId } = req.params;
     const { url, quality, filter } = req.query;
@@ -242,6 +242,11 @@ export async function downloadVideoYtDlp(req: Request, res: Response) {
 
     const ytDlp = await initializeYtDlp();
     if (!ytDlp) {
+      // If this is a fallback call, throw error instead of sending response
+      // This allows the caller to handle the error appropriately
+      if (isFallback) {
+        throw new Error(PYTHON_NOT_AVAILABLE_MESSAGE);
+      }
       return res.status(503).json({
         error: "yt-dlp is not available",
         message: PYTHON_NOT_AVAILABLE_MESSAGE,
@@ -310,7 +315,7 @@ export async function downloadVideoYtDlp(req: Request, res: Response) {
   }
 }
 
-export async function streamVideoYtDlp(req: Request, res: Response) {
+export async function streamVideoYtDlp(req: Request, res: Response, isFallback: boolean = false) {
   // Streaming is the same as download but without Content-Disposition header
   try {
     const { videoId } = req.params;
@@ -330,6 +335,11 @@ export async function streamVideoYtDlp(req: Request, res: Response) {
 
     const ytDlp = await initializeYtDlp();
     if (!ytDlp) {
+      // If this is a fallback call, throw error instead of sending response
+      // This allows the caller to handle the error appropriately
+      if (isFallback) {
+        throw new Error(PYTHON_NOT_AVAILABLE_MESSAGE);
+      }
       return res.status(503).json({
         error: "yt-dlp is not available",
         message: PYTHON_NOT_AVAILABLE_MESSAGE,
