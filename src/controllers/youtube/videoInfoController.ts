@@ -4,10 +4,13 @@ import type { YouTubeVideoInfo, VideoFormat } from "../../types/youtube/youtube"
 import { getVideoInfoYtDlp, fetchYtDlpMetadata } from "./ytdlpController";
 import { extractVideoInfo } from "./customExtractor";
 import { videoInfo as ytExtVideoInfo } from "youtube-ext";
+import { youtubeCookieManager } from "../../utils/cookieManager";
 
-// Create ytdl agent with cookies if provided for better access to restricted videos
-const agent = process.env.YOUTUBE_COOKIE 
-  ? ytdl.createAgent(
+// Get agent with cookies - either from env or dynamically fetched
+async function getAgent() {
+  // Priority 1: Use environment variable if set
+  if (process.env.YOUTUBE_COOKIE) {
+    return ytdl.createAgent(
       process.env.YOUTUBE_COOKIE.split(';').map(cookie => {
         const [name, ...valueParts] = cookie.trim().split('=');
         return {
@@ -16,8 +19,23 @@ const agent = process.env.YOUTUBE_COOKIE
           domain: '.youtube.com'
         };
       })
-    )
-  : undefined;
+    );
+  }
+  
+  // Priority 2: Try to fetch cookies dynamically
+  try {
+    const cookies = await youtubeCookieManager.getCookies();
+    if (cookies.length > 0) {
+      console.log(`Using ${cookies.length} dynamically fetched cookies for video info`);
+      return ytdl.createAgent(cookies);
+    }
+  } catch (error) {
+    console.error("Failed to get dynamic cookies:", error instanceof Error ? error.message : error);
+  }
+  
+  // Priority 3: No cookies
+  return undefined;
+}
 
 // Fallback: get video info from youtube-ext (works even when bot-detected for metadata)
 async function getVideoInfoYouTubeExt(videoId: string): Promise<YouTubeVideoInfo | null> {
@@ -109,6 +127,9 @@ export async function getVideoInfo(req: Request, res: Response) {
 
     // Strategy 2: Try @distube/ytdl-core
     try {
+      // Get agent with cookies (env or dynamic)
+      const agent = await getAgent();
+      
       const options = agent ? { agent } : {};
       const info = await ytdl.getInfo(videoUrl, options);
 

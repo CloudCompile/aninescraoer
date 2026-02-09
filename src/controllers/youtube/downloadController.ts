@@ -2,10 +2,13 @@ import { Request, Response } from "express";
 import ytdl from "@distube/ytdl-core";
 import { downloadVideoYtDlp, streamVideoYtDlp } from "./ytdlpController";
 import { extractVideoInfo, selectFormat, proxyVideoStream } from "./customExtractor";
+import { youtubeCookieManager } from "../../utils/cookieManager";
 
-// Create ytdl agent with cookies if provided for better access to restricted videos
-const agent = process.env.YOUTUBE_COOKIE 
-  ? ytdl.createAgent(
+// Get agent with cookies - either from env or dynamically fetched
+async function getAgent() {
+  // Priority 1: Use environment variable if set
+  if (process.env.YOUTUBE_COOKIE) {
+    return ytdl.createAgent(
       process.env.YOUTUBE_COOKIE.split(';').map(cookie => {
         const [name, ...valueParts] = cookie.trim().split('=');
         return {
@@ -14,8 +17,23 @@ const agent = process.env.YOUTUBE_COOKIE
           domain: '.youtube.com'
         };
       })
-    )
-  : undefined;
+    );
+  }
+  
+  // Priority 2: Try to fetch cookies dynamically
+  try {
+    const cookies = await youtubeCookieManager.getCookies();
+    if (cookies.length > 0) {
+      console.log(`Using ${cookies.length} dynamically fetched cookies`);
+      return ytdl.createAgent(cookies);
+    }
+  } catch (error) {
+    console.error("Failed to get dynamic cookies:", error instanceof Error ? error.message : error);
+  }
+  
+  // Priority 3: No cookies
+  return undefined;
+}
 
 export async function downloadVideo(req: Request, res: Response) {
   try {
@@ -73,6 +91,9 @@ export async function downloadVideo(req: Request, res: Response) {
 
     // Strategy 2: Try @distube/ytdl-core
     try {
+      // Get agent with cookies (env or dynamic)
+      const agent = await getAgent();
+      
       // Get basic info with agent if cookies are provided
       const infoOptions = agent ? { agent } : {};
       const info = await ytdl.getBasicInfo(videoUrl, infoOptions);
@@ -97,7 +118,7 @@ export async function downloadVideo(req: Request, res: Response) {
       stream.on("error", (error) => {
         console.error("ytdl-core download stream error, falling back to yt-dlp:", error);
         if (!res.headersSent) {
-          return downloadVideoYtDlp(req, res);
+          return downloadVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
         } else {
           console.warn("Cannot fall back to yt-dlp: response headers already sent");
           res.end();
@@ -108,7 +129,7 @@ export async function downloadVideo(req: Request, res: Response) {
     } catch (ytdlError) {
       console.error("@distube/ytdl-core download error:", ytdlError);
       console.log("Falling back to yt-dlp for download");
-      return downloadVideoYtDlp(req, res);
+      return downloadVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
     }
   } catch (error) {
     console.error("Error downloading video:", error);
@@ -121,11 +142,11 @@ export async function downloadVideo(req: Request, res: Response) {
         error: isBotDetected
           ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
           : isPythonMissing
-          ? "Download failed - all available backends exhausted"
+          ? "All available download backends failed"
           : "Failed to download video",
         message: errMsg,
         suggestion: isPythonMissing
-          ? "This video requires advanced extraction methods that need Python, which is not available in this environment. The custom extractor and ytdl-core backends also failed."
+          ? "All download methods were tried but failed. Server lacks Python for yt-dlp. Try a different video or contact the administrator."
           : undefined,
       });
     }
@@ -179,6 +200,9 @@ export async function streamVideo(req: Request, res: Response) {
 
     // Strategy 2: Try @distube/ytdl-core
     try {
+      // Get agent with cookies (env or dynamic)
+      const agent = await getAgent();
+      
       // Set headers for streaming
       res.setHeader("Content-Type", "video/mp4");
 
@@ -197,7 +221,7 @@ export async function streamVideo(req: Request, res: Response) {
       stream.on("error", (error) => {
         console.error("ytdl-core stream error, falling back to yt-dlp:", error);
         if (!res.headersSent) {
-          return streamVideoYtDlp(req, res);
+          return streamVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
         } else {
           console.warn("Cannot fall back to yt-dlp: response headers already sent");
           res.end();
@@ -208,7 +232,7 @@ export async function streamVideo(req: Request, res: Response) {
     } catch (ytdlError) {
       console.error("@distube/ytdl-core stream error:", ytdlError);
       console.log("Falling back to yt-dlp for streaming");
-      return streamVideoYtDlp(req, res);
+      return streamVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
     }
   } catch (error) {
     console.error("Error streaming video:", error);
@@ -221,11 +245,11 @@ export async function streamVideo(req: Request, res: Response) {
         error: isBotDetected
           ? "YouTube bot detection triggered. Set YOUTUBE_COOKIE environment variable with browser cookies to bypass this."
           : isPythonMissing
-          ? "Streaming failed - all available backends exhausted"
+          ? "All available streaming backends failed"
           : "Failed to stream video",
         message: errMsg,
         suggestion: isPythonMissing
-          ? "This video requires advanced extraction methods that need Python, which is not available in this environment. The custom extractor and ytdl-core backends also failed."
+          ? "All streaming methods were tried but failed. Server lacks Python for yt-dlp. Try a different video or contact the administrator."
           : undefined,
       });
     }

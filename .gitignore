@@ -148,3 +148,6 @@ package-lock.json
 # yt-dlp binary (downloads automatically)
 yt-dlp
 yt-dlp.exe
+
+# Dynamic cookie files
+.yt-dlp-cookies.txt

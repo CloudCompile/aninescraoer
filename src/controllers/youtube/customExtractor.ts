@@ -20,12 +20,34 @@ import type { YouTubeVideoInfo, VideoFormat } from "../../types/youtube/youtube"
 // --- HTTP helpers ---
 
 const INNERTUBE_API_URL = "https://www.youtube.com/youtubei/v1/player";
+const INNERTUBE_API_KEY = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"; // Public API key
 
 const ANDROID_USER_AGENT =
   "com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip";
 
 const WEB_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+const MOBILE_USER_AGENT =
+  "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
+
+// Complete browser headers to look more legitimate
+function getRealisticHeaders(userAgent: string) {
+  return {
+    "User-Agent": userAgent,
+    "Accept": "*/*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Origin": "https://www.youtube.com",
+    "Referer": "https://www.youtube.com/",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
+    "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+  };
+}
 
 // --- Innertube API clients ---
 
@@ -65,20 +87,139 @@ function buildIOSPayload(videoId: string) {
   };
 }
 
+function buildTVEmbeddedPayload(videoId: string) {
+  return {
+    videoId,
+    context: {
+      client: {
+        clientName: "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
+        clientVersion: "2.0",
+        hl: "en",
+        gl: "US",
+      },
+      thirdParty: {
+        embedUrl: "https://www.youtube.com/",
+      },
+    },
+    contentCheckOk: true,
+    racyCheckOk: true,
+  };
+}
+
+function buildAndroidEmbeddedPayload(videoId: string) {
+  return {
+    videoId,
+    context: {
+      client: {
+        clientName: "ANDROID_EMBEDDED_PLAYER",
+        clientVersion: "19.13.36",
+        clientScreen: "EMBED",
+        androidSdkVersion: 30,
+        hl: "en",
+        gl: "US",
+      },
+      thirdParty: {
+        embedUrl: "https://www.youtube.com/",
+      },
+    },
+    contentCheckOk: true,
+    racyCheckOk: true,
+  };
+}
+
+function buildMWEBPayload(videoId: string) {
+  return {
+    videoId,
+    context: {
+      client: {
+        clientName: "MWEB",
+        clientVersion: "2.20240304.08.00",
+        hl: "en",
+        gl: "US",
+        userAgent: MOBILE_USER_AGENT,
+      },
+    },
+    contentCheckOk: true,
+    racyCheckOk: true,
+  };
+}
+
+function buildTVPayload(videoId: string) {
+  return {
+    videoId,
+    context: {
+      client: {
+        clientName: "TVHTML5",
+        clientVersion: "7.20240304.08.00",
+        hl: "en",
+        gl: "US",
+      },
+    },
+    contentCheckOk: true,
+    racyCheckOk: true,
+  };
+}
+
+function buildWebEmbeddedPayload(videoId: string) {
+  return {
+    videoId,
+    context: {
+      client: {
+        clientName: "WEB_EMBEDDED_PLAYER",
+        clientVersion: "1.20220918",
+        clientScreen: "EMBED",
+        hl: "en",
+        gl: "US",
+      },
+      thirdParty: {
+        embedUrl: "https://www.youtube.com/",
+      },
+    },
+    contentCheckOk: true,
+    racyCheckOk: true,
+  };
+}
+
 // --- Core extraction via Innertube API ---
 
 async function fetchFromInnertube(videoId: string): Promise<any> {
-  // Try ANDROID client first (best format selection, direct URLs)
+  // Try multiple clients in order of best bypass potential
   const clients = [
     {
       name: "ANDROID",
       payload: buildAndroidPayload(videoId),
       ua: ANDROID_USER_AGENT,
+      useApiKey: false,
+    },
+    {
+      name: "MWEB",
+      payload: buildMWEBPayload(videoId),
+      ua: MOBILE_USER_AGENT,
+      useApiKey: true,
+    },
+    {
+      name: "ANDROID_EMBEDDED",
+      payload: buildAndroidEmbeddedPayload(videoId),
+      ua: ANDROID_USER_AGENT,
+      useApiKey: false,
+    },
+    {
+      name: "TV",
+      payload: buildTVPayload(videoId),
+      ua: WEB_USER_AGENT,
+      useApiKey: true,
+    },
+    {
+      name: "WEB_EMBEDDED",
+      payload: buildWebEmbeddedPayload(videoId),
+      ua: WEB_USER_AGENT,
+      useApiKey: false,
     },
     {
       name: "IOS",
       payload: buildIOSPayload(videoId),
       ua: "com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)",
+      useApiKey: false,
     },
   ];
 
@@ -86,11 +227,16 @@ async function fetchFromInnertube(videoId: string): Promise<any> {
 
   for (const client of clients) {
     try {
-      const resp = await axios.post(INNERTUBE_API_URL, client.payload, {
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": client.ua,
-        },
+      const url = client.useApiKey 
+        ? `${INNERTUBE_API_URL}?key=${INNERTUBE_API_KEY}`
+        : INNERTUBE_API_URL;
+      
+      const headers = client.name === "MWEB" || client.name === "TV"
+        ? { ...getRealisticHeaders(client.ua), "Content-Type": "application/json" }
+        : { "Content-Type": "application/json", "User-Agent": client.ua };
+
+      const resp = await axios.post(url, client.payload, {
+        headers,
         timeout: 15000,
       });
 
@@ -116,13 +262,51 @@ async function fetchFromInnertube(videoId: string): Promise<any> {
 
 // --- Fallback: extract from watch page HTML ---
 
+async function fetchFromEmbedPage(videoId: string): Promise<any> {
+  // Try the embed page which often bypasses bot detection
+  const url = `https://www.youtube.com/embed/${videoId}`;
+  const resp = await axios.get(url, {
+    headers: getRealisticHeaders(WEB_USER_AGENT),
+    maxRedirects: 5,
+    timeout: 15000,
+  });
+
+  const html: string = resp.data;
+
+  // Find ytInitialPlayerResponse in embed page
+  const marker = html.match(/ytInitialPlayerResponse\s*=\s*(\{)/);
+  if (!marker || marker.index === undefined) {
+    throw new Error("Could not find ytInitialPlayerResponse in embed page HTML");
+  }
+
+  const startIdx = marker.index + marker[0].length - 1;
+  let depth = 0;
+  let endIdx = startIdx;
+  for (let i = startIdx; i < html.length; i++) {
+    if (html[i] === "{") depth++;
+    else if (html[i] === "}") {
+      depth--;
+      if (depth === 0) {
+        endIdx = i;
+        break;
+      }
+    }
+  }
+
+  const data = JSON.parse(html.substring(startIdx, endIdx + 1));
+
+  if (data.playabilityStatus?.status !== "OK") {
+    const reason = data.playabilityStatus?.reason || data.playabilityStatus?.status;
+    throw new Error(reason || "Video not playable");
+  }
+
+  return data;
+}
+
 async function fetchFromWatchPage(videoId: string): Promise<any> {
   const url = `https://www.youtube.com/watch?v=${videoId}`;
   const resp = await axios.get(url, {
-    headers: {
-      "User-Agent": WEB_USER_AGENT,
-      "Accept-Language": "en-US,en;q=0.9",
-    },
+    headers: getRealisticHeaders(WEB_USER_AGENT),
     maxRedirects: 5,
     timeout: 15000,
   });
@@ -228,19 +412,26 @@ export async function extractVideoInfo(
   let data: any;
   let backend = "custom";
 
-  // Strategy A: Innertube API (ANDROID/IOS clients — returns direct URLs)
+  // Strategy A: Innertube API (ANDROID/IOS/EMBEDDED clients — returns direct URLs)
   try {
     data = await fetchFromInnertube(videoId);
     backend = "custom";
   } catch (innertubeError) {
-    // Strategy B: Watch page HTML extraction (may have signatureCipher)
-    console.log("Custom extractor: Innertube failed, trying watch page");
+    // Strategy B: Embed page HTML extraction (often bypasses bot detection)
+    console.log("Custom extractor: Innertube failed, trying embed page");
     try {
-      data = await fetchFromWatchPage(videoId);
-      backend = "custom-web";
-    } catch (webError) {
-      // Re-throw the Innertube error as it's more informative
-      throw innertubeError;
+      data = await fetchFromEmbedPage(videoId);
+      backend = "custom-embed";
+    } catch (embedError) {
+      // Strategy C: Watch page HTML extraction (last resort)
+      console.log("Custom extractor: Embed page failed, trying watch page");
+      try {
+        data = await fetchFromWatchPage(videoId);
+        backend = "custom-web";
+      } catch (webError) {
+        // Re-throw the Innertube error as it's most informative
+        throw innertubeError;
+      }
     }
   }
 
