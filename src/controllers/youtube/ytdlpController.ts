@@ -156,7 +156,7 @@ export async function getVideoInfoYtDlp(req: Request, res: Response) {
       return res.status(503).json({
         error: "yt-dlp is not available",
         message: PYTHON_NOT_AVAILABLE_ERROR,
-        suggestion: "This server environment doesn't have Python installed, so yt-dlp cannot be used. Please try using a different backend.",
+        suggestion: YTDLP_NOT_AVAILABLE_MESSAGE,
       });
     }
 
