@@ -5,7 +5,7 @@ import fs from "fs";
 import { execSync } from "child_process";
 
 // Error messages
-const PYTHON_NOT_AVAILABLE_ERROR = "Python not available - yt-dlp requires Python 3 to run";
+const PYTHON_NOT_AVAILABLE_MESSAGE = "Python not available - yt-dlp requires Python 3 to run";
 const YTDLP_NOT_AVAILABLE_MESSAGE = "This server environment doesn't have Python installed, so yt-dlp cannot be used. The custom extractor and ytdl-core backends are available for most videos.";
 
 // Find the node binary path for yt-dlp JS runtime
@@ -128,7 +128,7 @@ function getFormatSelector(quality?: string, filter?: string): string {
 export async function fetchYtDlpMetadata(videoUrl: string): Promise<any> {
   const ytDlp = await initializeYtDlp();
   if (!ytDlp) {
-    throw new Error(PYTHON_NOT_AVAILABLE_ERROR);
+    throw new Error(PYTHON_NOT_AVAILABLE_MESSAGE);
   }
   // Include -f b to avoid yt-dlp-wrap defaulting to -f best (deprecated)
   return ytDlp.getVideoInfo([videoUrl, ...getCommonArgs(), "-f", "b"]);
@@ -155,7 +155,7 @@ export async function getVideoInfoYtDlp(req: Request, res: Response) {
     if (!ytDlp) {
       return res.status(503).json({
         error: "yt-dlp is not available",
-        message: PYTHON_NOT_AVAILABLE_ERROR,
+        message: PYTHON_NOT_AVAILABLE_MESSAGE,
         suggestion: YTDLP_NOT_AVAILABLE_MESSAGE,
       });
     }
@@ -244,7 +244,7 @@ export async function downloadVideoYtDlp(req: Request, res: Response) {
     if (!ytDlp) {
       return res.status(503).json({
         error: "yt-dlp is not available",
-        message: PYTHON_NOT_AVAILABLE_ERROR,
+        message: PYTHON_NOT_AVAILABLE_MESSAGE,
         suggestion: YTDLP_NOT_AVAILABLE_MESSAGE,
       });
     }
@@ -332,7 +332,7 @@ export async function streamVideoYtDlp(req: Request, res: Response) {
     if (!ytDlp) {
       return res.status(503).json({
         error: "yt-dlp is not available",
-        message: PYTHON_NOT_AVAILABLE_ERROR,
+        message: PYTHON_NOT_AVAILABLE_MESSAGE,
         suggestion: YTDLP_NOT_AVAILABLE_MESSAGE,
       });
     }
