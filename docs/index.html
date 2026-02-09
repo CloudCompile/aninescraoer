@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Downloader - YouTube, Spotify & Crunchyroll</title>
+    <title>YouTube Downloader - Download Videos & Audio</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📺</text></svg>">
 </head>
 <body>
     <div class="container">
         <!-- Header -->
         <header class="header">
             <div class="logo">
-                <span class="logo-icon">🎵</span>
-                <span class="logo-text">Media Downloader</span>
+                <span class="logo-icon">📺</span>
+                <span class="logo-text">YouTube Downloader</span>
             </div>
-            <p class="tagline">Download YouTube videos, Spotify tracks & browse Crunchyroll anime</p>
+            <p class="tagline">Download YouTube videos and audio in various formats</p>
         </header>
 
         <!-- Search Section -->
@@ -25,7 +25,7 @@
                     type="text" 
                     id="searchInput" 
                     class="search-input" 
-                    placeholder="Search YouTube/Crunchyroll or paste a YouTube/Spotify URL..."
+                    placeholder="Search YouTube videos or paste video URL..."
                     autocomplete="off"
                 >
                 <button id="searchBtn" class="search-btn">
@@ -33,15 +33,13 @@
                     Search
                 </button>
             </div>
-            <p class="search-hint">Enter a search term, YouTube URL, Spotify URL, or prefix with "cr:" for Crunchyroll</p>
+            <p class="search-hint">Enter a search term or paste a YouTube video URL</p>
         </section>
 
-        <!-- Tabs for Search Results / Video Info / Spotify / Crunchyroll -->
+        <!-- Tabs for Search Results / Video Info -->
         <div class="tabs" id="tabs" style="display: none;">
             <button class="tab-btn active" data-tab="search">Search Results</button>
             <button class="tab-btn" data-tab="video">Video Info</button>
-            <button class="tab-btn" data-tab="spotify">Spotify</button>
-            <button class="tab-btn" data-tab="crunchyroll">Crunchyroll</button>
         </div>
 
         <!-- Search Results Section -->
@@ -117,61 +115,6 @@
             <div class="video-description-section">
                 <h3 class="section-title">Description</h3>
                 <div id="videoDescription" class="video-description"></div>
-            </div>
-        </section>
-
-        <!-- Spotify Track Info Section -->
-        <section id="spotifyInfo" class="spotify-info hidden">
-            <div class="spotify-details">
-                <div class="spotify-art-container">
-                    <img id="spotifyArt" src="" alt="Album art" class="spotify-art">
-                </div>
-                <div class="spotify-metadata">
-                    <div class="spotify-badge">🎵 Spotify Track</div>
-                    <h2 id="spotifyTitle" class="spotify-title"></h2>
-                    <div class="spotify-artist-name">
-                        <span id="spotifyArtist"></span>
-                    </div>
-                    <div id="spotifyDuration" class="spotify-duration"></div>
-                </div>
-            </div>
-
-            <div class="download-section">
-                <h3 class="section-title">Download Audio</h3>
-                <p class="spotify-note">Audio will be sourced from YouTube and downloaded as an audio file.</p>
-                <div id="spotifyYoutubeMatch" class="spotify-youtube-match hidden">
-                    <p class="match-text"></p>
-                </div>
-                <div class="download-buttons">
-                    <button id="spotifyDownloadBtn" class="btn btn-spotify">
-                        <span class="btn-icon">⬇️</span>
-                        Download Audio
-                    </button>
-                    <button id="spotifyPreviewBtn" class="btn btn-secondary">
-                        <span class="btn-icon">▶️</span>
-                        Preview (30s)
-                    </button>
-                </div>
-                <div id="spotifyDownloadInfo" class="download-info hidden">
-                    <p class="info-text"></p>
-                </div>
-            </div>
-
-            <!-- Track list for albums/playlists -->
-            <div id="spotifyTrackList" class="spotify-track-list hidden">
-                <h3 class="section-title">Tracks</h3>
-                <div id="spotifyTracks" class="spotify-tracks"></div>
-            </div>
-        </section>
-
-        <!-- Crunchyroll Section -->
-        <section id="crunchyrollInfo" class="crunchyroll-info hidden">
-            <div class="cr-header">
-                <div class="cr-badge">🍥 Crunchyroll</div>
-                <h2 id="crunchyrollTitle" class="cr-section-heading">Latest Anime</h2>
-            </div>
-            <div id="crunchyrollGrid" class="cr-grid">
-                <!-- Crunchyroll results will be inserted here -->
             </div>
         </section>
 
