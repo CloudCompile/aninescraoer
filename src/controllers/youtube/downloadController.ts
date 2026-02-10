@@ -118,7 +118,18 @@ export async function downloadVideo(req: Request, res: Response) {
       stream.on("error", (error) => {
         console.error("ytdl-core download stream error, falling back to yt-dlp:", error);
         if (!res.headersSent) {
-          return downloadVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
+          // Wrap async logic to avoid unhandled promise rejections
+          downloadVideoYtDlp(req, res, true).catch((fallbackError) => {
+            console.error("yt-dlp fallback also failed:", fallbackError instanceof Error ? fallbackError.message : fallbackError);
+            // If yt-dlp fails (e.g., Python not available), send error response about the original ytdl-core error
+            if (!res.headersSent) {
+              res.status(500).json({
+                error: "Failed to download video",
+                message: error.message,
+                suggestion: "The video download failed. This might be due to bot detection or the video being unavailable. Try a different video or contact the administrator.",
+              });
+            }
+          });
         } else {
           console.warn("Cannot fall back to yt-dlp: response headers already sent");
           res.end();
@@ -129,7 +140,13 @@ export async function downloadVideo(req: Request, res: Response) {
     } catch (ytdlError) {
       console.error("@distube/ytdl-core download error:", ytdlError);
       console.log("Falling back to yt-dlp for download");
-      return downloadVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
+      try {
+        return await downloadVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
+      } catch (fallbackError) {
+        console.error("yt-dlp fallback also failed:", fallbackError instanceof Error ? fallbackError.message : fallbackError);
+        // If yt-dlp fails (e.g., Python not available), throw the original ytdl error to be handled by outer catch
+        throw ytdlError;
+      }
     }
   } catch (error) {
     console.error("Error downloading video:", error);
@@ -221,7 +238,18 @@ export async function streamVideo(req: Request, res: Response) {
       stream.on("error", (error) => {
         console.error("ytdl-core stream error, falling back to yt-dlp:", error);
         if (!res.headersSent) {
-          return streamVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
+          // Wrap async logic to avoid unhandled promise rejections
+          streamVideoYtDlp(req, res, true).catch((fallbackError) => {
+            console.error("yt-dlp fallback also failed:", fallbackError instanceof Error ? fallbackError.message : fallbackError);
+            // If yt-dlp fails (e.g., Python not available), send error response about the original ytdl-core error
+            if (!res.headersSent) {
+              res.status(500).json({
+                error: "Failed to stream video",
+                message: error.message,
+                suggestion: "The video streaming failed. This might be due to bot detection or the video being unavailable. Try a different video or contact the administrator.",
+              });
+            }
+          });
         } else {
           console.warn("Cannot fall back to yt-dlp: response headers already sent");
           res.end();
@@ -232,7 +260,13 @@ export async function streamVideo(req: Request, res: Response) {
     } catch (ytdlError) {
       console.error("@distube/ytdl-core stream error:", ytdlError);
       console.log("Falling back to yt-dlp for streaming");
-      return streamVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
+      try {
+        return await streamVideoYtDlp(req, res, true); // Pass true to indicate this is a fallback
+      } catch (fallbackError) {
+        console.error("yt-dlp fallback also failed:", fallbackError instanceof Error ? fallbackError.message : fallbackError);
+        // If yt-dlp fails (e.g., Python not available), throw the original ytdl error to be handled by outer catch
+        throw ytdlError;
+      }
     }
   } catch (error) {
     console.error("Error streaming video:", error);
